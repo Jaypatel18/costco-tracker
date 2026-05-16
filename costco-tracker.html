@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="theme-color" content="#E31837"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="CPM Tracker"/>
+<title>Costco Price Match Tracker</title>
+<link rel="apple-touch-icon" id="ati" href=""/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap');
+
+:root {
+  --red:#E31837; --blue:#0061A8; --green:#2e7d32;
+  --bg:#f0f0f0; --card:#fff; --border:#e0e0e0;
+  --text:#1a1a1a; --sub:#666;
+  --input:#f5f5f5; --iborder:#ddd;
+  --nav:#fff; --navborder:#e0e0e0;
+}
+.dark {
+  --bg:#111; --card:#1e1e1e; --border:#2c2c2c;
+  --text:#f0f0f0; --sub:#999;
+  --input:#2a2a2a; --iborder:#3c3c3c;
+  --nav:#1a1a1a; --navborder:#2c2c2c;
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+html, body { height:100%; overflow:hidden; }
+
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg); color:var(--text);
+  overscroll-behavior:none;
+  /* iOS fill-available for correct height */
+  min-height: -webkit-fill-available;
+}
+
+#app {
+  display:flex; flex-direction:column;
+  height:100vh;
+  height:-webkit-fill-available;
+  max-width:430px; margin:0 auto;
+  overflow:hidden;
+}
+
+/* ── Header ── */
+#hdr {
+  background:var(--red); color:#fff;
+  padding: max(12px, env(safe-area-inset-top)) 14px 12px;
+  flex-shrink:0;
+  box-shadow:0 2px 14px rgba(227,24,55,.3);
+  z-index:10;
+}
+.hrow { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.hlogo { display:flex; align-items:center; gap:9px; }
+.hey { font-size:10px; font-weight:700; letter-spacing:2px; opacity:.75; text-transform:uppercase; }
+.htit { font-size:18px; font-weight:700; letter-spacing:-.3px; }
+.hbtns { display:flex; gap:6px; flex-shrink:0; }
+.hbtn {
+  background:rgba(255,255,255,.2); border:none; border-radius:20px;
+  padding:6px 11px; color:#fff; font-size:11px; font-weight:700;
+  cursor:pointer; font-family:'DM Sans',sans-serif;
+  -webkit-appearance:none; appearance:none;
+}
+.hbtn:active { opacity:.7; }
+
+/* ── Content ── */
+#content {
+  flex:1; min-height:0;
+  overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:14px 14px 130px;
+}
+
+/* ── Nav ── */
+#nav {
+  display:flex; flex-shrink:0;
+  background:var(--nav);
+  border-top:1px solid var(--navborder);
+  padding-bottom: max(env(safe-area-inset-bottom), 10px);
+  z-index:10;
+}
+.nb {
+  flex:1; background:none; border:none;
+  padding:10px 0 6px;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  cursor:pointer; position:relative;
+  font-family:'DM Sans',sans-serif;
+  -webkit-appearance:none; appearance:none;
+}
+.ni { font-size:20px; line-height:1; }
+.nl { font-size:10px; font-weight:500; color:var(--sub); }
+.nb.on .nl { color:var(--red); font-weight:700; }
+.nbadge {
+  position:absolute; top:6px; right:calc(50% - 18px);
+  background:var(--red); color:#fff;
+  width:15px; height:15px; border-radius:8px;
+  font-size:9px; font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+
+/* ── FAB ── */
+#fab {
+  position:fixed;
+  bottom: calc(max(env(safe-area-inset-bottom), 10px) + 60px);
+  right: max(15px, calc(50vw - 200px));
+  width:54px; height:54px; border-radius:27px;
+  background:var(--red); color:#fff;
+  border:none; font-size:28px; cursor:pointer;
+  box-shadow:0 4px 18px rgba(227,24,55,.5);
+  display:flex; align-items:center; justify-content:center;
+  z-index:200; -webkit-appearance:none; appearance:none;
+  transition:transform .15s;
+}
+#fab:active { transform:scale(.92); }
+
+/* ── Toast ── */
+#toast {
+  position:fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left:50%; transform:translateX(-50%);
+  background:#222; color:#fff;
+  padding:10px 20px; border-radius:24px;
+  font-size:13px; font-weight:600;
+  z-index:9999; white-space:nowrap;
+  box-shadow:0 4px 18px rgba(0,0,0,.4);
+  opacity:0; transition:opacity .2s;
+  pointer-events:none;
+}
+#toast.show { opacity:1; }
+
+/* ── Cards ── */
+.card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px 15px; margin-bottom:10px; }
+.tap { cursor:pointer; }
+.tap:active { opacity:.8; }
+
+/* ── Summary ── */
+.sgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.sc { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:13px; border-left:4px solid; }
+.si { font-size:19px; margin-bottom:4px; }
+.sv { font-size:20px; font-weight:700; font-family:'DM Mono',monospace; }
+.sl { font-size:10px; color:var(--sub); font-weight:600; margin-top:2px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* ── Misc ── */
+.sec { font-size:11px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:9px; margin-top:4px; }
+.badge { font-size:11px; font-weight:600; padding:3px 9px; border-radius:10px; display:inline-block; }
+.empty { text-align:center; padding:40px 18px; color:var(--sub); }
+.eico { font-size:42px; margin-bottom:11px; }
+.emsg { font-size:13px; line-height:1.6; }
+
+/* ── Filter chips ── */
+.frow { display:flex; gap:7px; overflow-x:auto; padding-bottom:10px; margin-bottom:10px; scrollbar-width:none; }
+.frow::-webkit-scrollbar { display:none; }
+.chip { flex-shrink:0; border-radius:20px; padding:6px 13px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--sub); font-family:'DM Sans',sans-serif; }
+.chip.on { background:var(--red); color:#fff; border-color:var(--red); }
+
+/* ── Modal ── */
+.ov {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:500; display:flex; align-items:flex-end;
+}
+.ov.center { align-items:center; padding:20px; }
+.sh {
+  background:var(--card); border-radius:24px 24px 0 0;
+  width:100%; max-width:430px; margin:0 auto;
+  padding:18px 17px;
+  padding-bottom: calc(max(env(safe-area-inset-bottom), 16px) + 16px);
+  max-height:88vh; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+.sh.center { border-radius:20px; max-height:none; padding:24px 20px; }
+.mh { width:38px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
+.mt { font-size:18px; font-weight:700; color:var(--text); margin-bottom:16px; }
+
+/* ── Forms ── */
+.fl { font-size:12px; font-weight:600; color:var(--sub); display:block; margin-bottom:5px; }
+.ff { margin-bottom:13px; }
+.fi {
+  width:100%; background:var(--input);
+  border:1px solid var(--iborder); border-radius:10px;
+  padding:12px 13px; font-size:16px;
+  color:var(--text); font-family:'DM Sans',sans-serif;
+  outline:none; display:block;
+  -webkit-appearance:none; appearance:none;
+  transition:border-color .15s;
+}
+select.fi { -webkit-appearance:menulist; appearance:menulist; padding-right:6px; }
+.fi:focus { border-color:var(--red); }
+.fg2 { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.ferr { background:#fdecea; color:#c62828; border-radius:10px; padding:10px 13px; font-size:13px; margin-bottom:13px; display:none; }
+
+/* ── Buttons ── */
+.bp {
+  width:100%; background:var(--red); color:#fff;
+  border:none; border-radius:14px; padding:14px;
+  font-size:15px; font-weight:700; cursor:pointer;
+  font-family:'DM Sans',sans-serif; display:block;
+  -webkit-appearance:none; appearance:none;
+}
+.bp:active { opacity:.85; }
+.bo {
+  width:100%; background:transparent; color:#e53935;
+  border:1px solid #e53935; border-radius:14px; padding:12px;
+  font-size:13px; font-weight:600; cursor:pointer;
+  font-family:'DM Sans',sans-serif; display:block;
+  -webkit-appearance:none; appearance:none;
+}
+.bb {
+  background:var(--blue); color:#fff; border:none;
+  border-radius:10px; padding:10px 15px;
+  font-weight:700; cursor:pointer; white-space:nowrap;
+  font-family:'DM Sans',sans-serif; font-size:13px;
+  -webkit-appearance:none; appearance:none;
+}
+
+/* ── Detail ── */
+.pcells { display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:13px; }
+.pc { background:var(--input); border-radius:12px; padding:10px 7px; text-align:center; }
+.pcl { font-size:10px; color:var(--sub); font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+.pcv { font-size:15px; font-weight:700; font-family:'DM Mono',monospace; color:var(--text); }
+.ubox { border-radius:10px; padding:10px 13px; margin-bottom:13px; display:flex; justify-content:space-between; align-items:center; }
+.clink { display:block; text-align:center; background:#e3f2fd; color:var(--blue); border-radius:12px; padding:10px; font-size:13px; font-weight:600; text-decoration:none; margin-bottom:13px; }
+.uprow { display:flex; gap:8px; }
+.pctb { background:#e8f5e9; border-radius:10px; padding:7px 13px; margin-bottom:13px; text-align:center; }
+.pctb span { color:#2e7d32; font-weight:700; font-size:14px; }
+
+/* ── Settings ── */
+.srow { display:flex; align-items:center; justify-content:space-between; padding:13px 15px; border-bottom:1px solid var(--border); }
+.srow:last-child { border-bottom:none; }
+.slb { font-weight:600; font-size:14px; color:var(--text); }
+.ssb { font-size:11px; color:var(--sub); margin-top:1px; }
+.ssel { background:var(--input); border:1px solid var(--iborder); border-radius:8px; padding:6px 9px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; }
+.tog { width:44px; height:24px; border-radius:12px; background:#ccc; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+.tog.on { background:var(--red); }
+.tok { position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:9px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.3); }
+.tog.on .tok { left:23px; }
+
+/* ── Stats ── */
+.stg { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.stc { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px; text-align:center; }
+.sti { font-size:23px; margin-bottom:5px; }
+.stv { font-size:21px; font-weight:700; font-family:'DM Mono',monospace; color:var(--text); }
+.stl { font-size:10px; color:var(--sub); margin-top:2px; font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+
+/* ── Claims ── */
+.chero { background:linear-gradient(135deg,var(--red),#8b0000); border-radius:16px; padding:18px; margin-bottom:14px; color:#fff; text-align:center; }
+.chelbl { font-size:11px; font-weight:700; letter-spacing:1px; opacity:.8; text-transform:uppercase; }
+.cheval { font-size:36px; font-weight:700; font-family:'DM Mono',monospace; margin-top:4px; }
+.chesub { font-size:12px; opacity:.75; margin-top:3px; }
+
+/* ── Notif banner ── */
+.nbanner { background:#fff3e0; border:1px solid #ffb300; border-radius:12px; padding:11px 13px; margin-bottom:13px; display:flex; align-items:center; justify-content:space-between; gap:9px; }
+.nbt { font-size:12px; color:#e65100; font-weight:500; flex:1; }
+.nbb { background:#ff6f00; color:#fff; border:none; border-radius:8px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; -webkit-appearance:none; }
+
+/* ── Receipt ── */
+.sa { border:2px dashed var(--iborder); border-radius:12px; padding:16px; text-align:center; background:var(--input); cursor:pointer; }
+.sa:active { border-color:var(--red); }
+.sai { font-size:28px; margin-bottom:6px; }
+.sat { font-size:13px; color:var(--sub); font-weight:500; }
+.sas { font-size:11px; color:var(--sub); margin-top:3px; opacity:.7; }
+.rthumb { width:100%; max-height:150px; object-fit:cover; border-radius:10px; margin-bottom:8px; cursor:pointer; }
+.spin { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.sres { background:#e8f5e9; border:1px solid #a5d6a7; border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+.srh { font-size:12px; color:#2e7d32; font-weight:700; margin-bottom:6px; }
+.srr { font-size:13px; color:var(--text); margin-bottom:2px; }
+.rfs { position:fixed; inset:0; background:rgba(0,0,0,.93); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; }
+.rfs img { max-width:100%; max-height:100%; border-radius:8px; object-fit:contain; }
+
+.aboutbox { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px 17px; margin-top:18px; }
+.aboutbox .al { font-size:12px; color:var(--sub); font-weight:600; margin-bottom:5px; }
+.aboutbox .at { font-size:12px; color:var(--sub); line-height:1.6; }
+.aboutbox a { display:inline-block; margin-top:7px; font-size:12px; color:var(--red); font-weight:600; text-decoration:none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div class="hrow">
+      <div class="hlogo">
+        <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+          <defs><clipPath id="cc"><circle cx="18" cy="18" r="18"/></clipPath></defs>
+          <rect x="0" y="0" width="18" height="36" fill="#E31837" clip-path="url(#cc)"/>
+          <rect x="18" y="0" width="18" height="36" fill="#0061A8" clip-path="url(#cc)"/>
+          <circle cx="18" cy="18" r="17" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+          <line x1="18" y1="4" x2="18" y2="32" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <text x="18" y="22" text-anchor="middle" font-family="Arial" font-weight="900" font-size="10" fill="white" letter-spacing="0.5">CPM</text>
+        </svg>
+        <div>
+          <div class="hey">Costco</div>
+          <div class="htit">Price Match Tracker</div>
+        </div>
+      </div>
+      <div class="hbtns">
+        <button class="hbtn" id="notif-btn" style="display:none">🔔 Alerts</button>
+        <button class="hbtn" id="export-btn">↓ CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+  <button id="fab">+</button>
+
+  <nav id="nav">
+    <button class="nb on" data-tab="home"><span class="ni">🏠</span><span class="nl">Home</span><span class="nbadge" id="ubadge" style="display:none"></span></button>
+    <button class="nb" data-tab="items"><span class="ni">📦</span><span class="nl">Items</span></button>
+    <button class="nb" data-tab="claims"><span class="ni">💰</span><span class="nl">Claims</span></button>
+    <button class="nb" data-tab="stats"><span class="ni">📊</span><span class="nl">Stats</span></button>
+    <button class="nb" data-tab="settings"><span class="ni">⚙️</span><span class="nl">Settings</span></button>
+  </nav>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+let items    = parse(localStorage.getItem('cpt-items'),    []);
+let claims   = parse(localStorage.getItem('cpt-claims'),   []);
+let settings = parse(localStorage.getItem('cpt-settings'), {warningDays:5, minRefund:5, darkMode:false});
+
+function parse(str, def) { try { return str ? JSON.parse(str) : def; } catch { return def; } }
+function saveItems()    { localStorage.setItem('cpt-items',    JSON.stringify(items)); }
+function saveClaims()   { localStorage.setItem('cpt-claims',   JSON.stringify(claims)); }
+function saveSettings() { localStorage.setItem('cpt-settings', JSON.stringify(settings)); }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function daysLeft(d) {
+  const p = d.split('-').map(Number);
+  const deadline = new Date(p[0], p[1]-1, p[2]+30);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.ceil((deadline - today) / 86400000);
+}
+function urgency(item) {
+  if (item.claimed) return 'claimed';
+  const d = daysLeft(item.purchaseDate);
+  if (d < 0)  return 'expired';
+  if (d <= 2) return 'critical';
+  if (d <= settings.warningDays) return 'warning';
+  return 'ok';
+}
+const UC = {
+  ok:       {bg:'#e8f5e9', color:'#2e7d32', label:'✓ Eligible'},
+  warning:  {bg:'#fff8e1', color:'#f57f17', label:'⚠ Expiring soon'},
+  critical: {bg:'#fdecea', color:'#c62828', label:'🔴 Expiring soon!'},
+  expired:  {bg:'#f5f5f5', color:'#9e9e9e', label:'✗ Expired'},
+  claimed:  {bg:'#e3f2fd', color:'#1565c0', label:'✓ Claimed'},
+};
+function pctDrop(a, b) {
+  if (!b || +b >= +a) return null;
+  return Math.round((a - b) / a * 100);
+}
+function refund(a, b) {
+  if (!b || +b >= +a) return 0;
+  return +a - +b;
+}
+function fmt(n)  { return (+n).toFixed(2); }
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function uid()   { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+function applyDark() { document.body.classList.toggle('dark', settings.darkMode); }
+applyDark();
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+let curTab = 'home';
+let itemsFilter = 'all';
+
+document.getElementById('nav').addEventListener('click', function(e) {
+  const btn = e.target.closest('.nb');
+  if (!btn) return;
+  const tab = btn.dataset.tab;
+  if (!tab) return;
+  curTab = tab;
+  document.querySelectorAll('.nb').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  render();
+});
+
+// ── FAB ───────────────────────────────────────────────────────────────────────
+document.getElementById('fab').addEventListener('click', openAdd);
+
+// ── Export ────────────────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', function() {
+  const rows = [['Name','Item #','Category','Purchase Price','Current Price','Refund','Purchase Date','Status']];
+  items.forEach(it => rows.push([
+    it.name, it.itemNumber||'', it.category,
+    it.purchasePrice, it.currentPrice||'',
+    refund(it.purchasePrice, it.currentPrice).toFixed(2),
+    it.purchaseDate, it.claimed ? 'Claimed' : urgency(it)
+  ]));
+  const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'costco-price-match.csv';
+  a.click();
+  toast('CSV exported ✓');
+});
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+function checkNotifBtn() {
+  const btn = document.getElementById('notif-btn');
+  if ('Notification' in window && Notification.permission !== 'granted') {
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+document.getElementById('notif-btn').addEventListener('click', function() {
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') { checkNotifBtn(); fireNotif(); toast('Alerts enabled! 🔔'); }
+  });
+});
+function fireNotif() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = items.filter(it => { const u = urgency(it); return u==='warning'||u==='critical'; });
+  if (n.length > 0) {
+    new Notification('Costco Price Match 🛒', {
+      body: n.length + ' item' + (n.length>1?'s':'') + ' expiring soon — open the app to claim.'
+    });
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const es = items.filter(it => { const u=urgency(it); return u==='warning'||u==='critical'; }).length;
+  const badge = document.getElementById('ubadge');
+  badge.textContent = es;
+  badge.style.display = es > 0 ? 'flex' : 'none';
+
+  const c = document.getElementById('content');
+  if (curTab === 'home')     c.innerHTML = renderHome();
+  if (curTab === 'items')    c.innerHTML = renderItems();
+  if (curTab === 'claims')   c.innerHTML = renderClaims();
+  if (curTab === 'stats')    c.innerHTML = renderStats();
+  if (curTab === 'settings') c.innerHTML = renderSettings();
+
+  attachTabHandlers();
+  checkNotifBtn();
+}
+
+// ── HOME ──────────────────────────────────────────────────────────────────────
+function renderHome() {
+  const claimable = items
+    .filter(it => !it.claimed && urgency(it)!=='expired' && it.currentPrice && +it.currentPrice < +it.purchasePrice)
+    .reduce((s,it) => s + refund(it.purchasePrice, it.currentPrice), 0);
+  const saved   = claims.reduce((s,c) => s+(c.refundAmount||0), 0);
+  const expiring = items.filter(it => { const u=urgency(it); return u==='warning'||u==='critical'; }).length;
+  const active  = items.filter(it => !it.claimed && urgency(it)!=='expired').length;
+
+  const notifBanner = ('Notification' in window && Notification.permission==='default')
+    ? '<div class="nbanner"><div class="nbt">🔔 Enable alerts before items expire</div><button class="nbb" id="nb-enable">Enable</button></div>' : '';
+
+  const urgentItems = items
+    .filter(it => { const u=urgency(it); return u==='warning'||u==='critical'; })
+    .sort((a,b) => daysLeft(a.purchaseDate)-daysLeft(b.purchaseDate));
+  const urgentIds = new Set(urgentItems.map(i=>i.id));
+
+  const restItems = items
+    .filter(it => !it.claimed && urgency(it)!=='expired' && !urgentIds.has(it.id))
+    .sort((a,b) => daysLeft(a.purchaseDate)-daysLeft(b.purchaseDate));
+
+  return notifBanner +
+    '<div class="sgrid">' +
+      sc('💵','$'+fmt(claimable),'Claimable Now','#E31837') +
+      sc('🏆','$'+fmt(saved),'Total Saved','#2e7d32') +
+      sc('⏳',expiring,'Expiring Soon',expiring>0?'#f57f17':'#2e7d32') +
+      sc('📦',active,'Active Items','#0061A8') +
+    '</div>' +
+    (urgentItems.length ? '<div class="sec">⚠ Act Now</div>' + urgentItems.map(itemCard).join('') : '') +
+    '<div class="sec">All Active Items</div>' +
+    (restItems.length ? restItems.map(itemCard).join('') : empty('🛒','No active items yet. Tap + to add your first purchase!'));
+}
+function sc(icon,val,lbl,color) {
+  return '<div class="sc" style="border-left-color:'+color+'"><div class="si">'+icon+'</div><div class="sv" style="color:'+color+'">'+val+'</div><div class="sl">'+lbl+'</div></div>';
+}
+
+// ── ITEMS ─────────────────────────────────────────────────────────────────────
+function renderItems() {
+  const filters = ['all','eligible','expiring','expired','claimed'];
+  const chips = filters.map(f =>
+    '<button class="chip'+(itemsFilter===f?' on':'')+'" data-filter="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</button>'
+  ).join('');
+
+  const filtered = items.filter(it => {
+    const u = urgency(it);
+    if (itemsFilter==='all')      return true;
+    if (itemsFilter==='eligible') return u==='ok'||u==='warning'||u==='critical';
+    if (itemsFilter==='expiring') return u==='warning'||u==='critical';
+    if (itemsFilter==='expired')  return u==='expired';
+    if (itemsFilter==='claimed')  return u==='claimed';
+    return true;
+  }).sort((a,b) => daysLeft(a.purchaseDate)-daysLeft(b.purchaseDate));
+
+  return '<div class="frow">'+chips+'</div>' +
+    (filtered.length ? filtered.map(itemCard).join('') : empty('📭','No items in this category.'));
+}
+
+// ── Item Card ─────────────────────────────────────────────────────────────────
+function itemCard(item) {
+  const u   = urgency(item);
+  const uc  = UC[u];
+  const d   = daysLeft(item.purchaseDate);
+  const pct = pctDrop(item.purchasePrice, item.currentPrice);
+  const r   = refund(item.purchasePrice, item.currentPrice);
+  const worth = r >= settings.minRefund;
+
+  const statusB = '<span class="badge" style="background:'+uc.bg+';color:'+uc.color+'">'+uc.label+(u!=='claimed'&&u!=='expired'?' · '+d+'d':'')+'</span>';
+  const pctB    = pct ? '<span class="badge" style="background:#e8f5e9;color:#2e7d32">↓'+pct+'%</span>' : '';
+  const lowB    = (r>0&&!worth) ? '<span class="badge" style="background:#f5f5f5;color:#9e9e9e">Below min</span>' : '';
+  const refundB = r>0 ? '<span style="font-weight:700;color:var(--red);font-family:\'DM Mono\',monospace;font-size:14px">+$'+fmt(r)+'</span>' : '';
+
+  return '<div class="card tap" data-id="'+item.id+'" style="opacity:'+(u==='expired'?.65:1)+'">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+      '<div style="flex:1;margin-right:12px">' +
+        '<div style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:2px">'+escH(item.name)+'</div>' +
+        (item.itemNumber?'<div style="font-size:11px;color:var(--sub);font-family:\'DM Mono\',monospace">#'+escH(item.itemNumber)+'</div>':'') +
+        '<div style="font-size:11px;color:var(--sub);margin-top:2px">'+escH(item.category)+' · '+new Date(item.purchaseDate).toLocaleDateString()+'</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        '<div style="font-size:16px;font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace">$'+fmt(item.purchasePrice)+'</div>' +
+        (item.currentPrice?'<div style="font-size:13px;font-weight:600;color:#2e7d32;font-family:\'DM Mono\',monospace">$'+fmt(item.currentPrice)+'</div>':'') +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px">' +
+      '<div style="display:flex;gap:5px;flex-wrap:wrap">'+statusB+pctB+lowB+'</div>' +
+      refundB +
+    '</div>' +
+  '</div>';
+}
+
+// ── CLAIMS ────────────────────────────────────────────────────────────────────
+function renderClaims() {
+  const total = claims.reduce((s,c)=>s+(c.refundAmount||0),0);
+  const hero  = claims.length
+    ? '<div class="chero"><div class="chelbl">Total Claimed</div><div class="cheval">$'+fmt(total)+'</div><div class="chesub">'+claims.length+' claim'+(claims.length!==1?'s':'')+'</div></div>'
+    : '';
+  const list = claims.length
+    ? claims.map(c =>
+        '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<div><div style="font-weight:700;font-size:14px;color:var(--text)">'+escH(c.itemName)+'</div>' +
+          '<div style="font-size:11px;color:var(--sub);margin-top:2px">'+new Date(c.claimedAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>' +
+          '<div style="font-weight:700;color:#2e7d32;font-size:18px;font-family:\'DM Mono\',monospace">+$'+fmt(c.refundAmount||0)+'</div>' +
+        '</div></div>'
+      ).join('')
+    : empty('💰','No claims yet. Find a price drop and claim your refund!');
+  return '<div class="sec">Claim History</div>' + hero + list;
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const total = claims.reduce((s,c)=>s+(c.refundAmount||0),0);
+  const avg   = claims.length ? total/claims.length : 0;
+  const best  = claims.reduce((b,c)=>c.refundAmount>(b?.refundAmount||0)?c:b, null);
+  const catMap = {};
+  items.forEach(it => { catMap[it.category]=(catMap[it.category]||0)+1; });
+  const topCat = Object.entries(catMap).sort((a,b)=>b[1]-a[1])[0];
+
+  const bestCard = best
+    ? '<div style="background:linear-gradient(135deg,#0061A8,#003f7f);border-radius:16px;padding:16px 20px;margin-bottom:14px;color:#fff">' +
+        '<div style="font-size:11px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:1px">🥇 Best Single Claim</div>' +
+        '<div style="font-size:24px;font-weight:700;font-family:\'DM Mono\',monospace;margin-top:4px">$'+fmt(best.refundAmount||0)+'</div>' +
+        '<div style="font-size:12px;opacity:.8;margin-top:2px">'+escH(best.itemName)+'</div></div>'
+    : '';
+  const catCard = topCat
+    ? '<div class="card"><div style="font-size:12px;color:var(--sub);font-weight:600;margin-bottom:4px">Most tracked category</div>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--text)">'+escH(topCat[0])+' <span style="color:var(--sub);font-weight:400;font-size:14px">('+topCat[1]+' items)</span></div></div>'
+    : '';
+
+  return '<div class="sec">Your Savings Stats</div>' +
+    '<div class="stg">' +
+      stc('🏆','$'+fmt(total),'Total Saved') +
+      stc('✅',claims.length,'Claims Made') +
+      stc('📈','$'+fmt(avg),'Avg Refund') +
+      stc('📦',items.length,'Items Tracked') +
+    '</div>' +
+    bestCard + catCard +
+    (!claims.length ? empty('📊','Start claiming refunds to see your stats here!') : '');
+}
+function stc(icon,val,lbl) {
+  return '<div class="stc"><div class="sti">'+icon+'</div><div class="stv">'+val+'</div><div class="stl">'+lbl+'</div></div>';
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings() {
+  const wOpts = [3,5,7,10].map(d=>'<option value="'+d+'"'+(settings.warningDays===d?' selected':'')+'>'+d+' days</option>').join('');
+  const mOpts = [0,1,3,5,10,20].map(d=>'<option value="'+d+'"'+(settings.minRefund===d?' selected':'')+'>\$'+d+'</option>').join('');
+  return '<div class="sec">Preferences</div>' +
+    '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">' +
+      '<div class="srow"><div><div class="slb">Warning window</div><div class="ssb">Days before expiry to alert you</div></div>' +
+        '<select class="ssel" id="s-warn">'+wOpts+'</select></div>' +
+      '<div class="srow"><div><div class="slb">Minimum refund</div><div class="ssb">Dim items below this amount</div></div>' +
+        '<select class="ssel" id="s-min">'+mOpts+'</select></div>' +
+      '<div class="srow"><div><div class="slb">Dark mode</div><div class="ssb">Easy on the eyes</div></div>' +
+        '<div class="tog'+(settings.darkMode?' on':'')+'" id="tog-dark"><div class="tok"></div></div></div>' +
+    '</div>' +
+    '<div class="aboutbox">' +
+      '<div class="al">About Price Match Policy</div>' +
+      '<div class="at">Costco\'s price protection policy allows members to request a refund for the price difference within <strong>30 days</strong> of purchase if the price drops. Visit the membership counter with your receipt.</div>' +
+      '<a href="https://www.costco.com" target="_blank">→ Visit Costco.com</a>' +
+    '</div>';
+}
+
+// ── Attach tab-level event handlers ───────────────────────────────────────────
+function attachTabHandlers() {
+  // Notif banner
+  const nbe = document.getElementById('nb-enable');
+  if (nbe) nbe.addEventListener('click', function() {
+    Notification.requestPermission().then(p => {
+      if (p==='granted') { checkNotifBtn(); fireNotif(); toast('Alerts enabled! 🔔'); render(); }
+    });
+  });
+
+  // Item cards → open detail
+  document.querySelectorAll('.card.tap[data-id]').forEach(el => {
+    el.addEventListener('click', function() { openDetail(this.dataset.id); });
+  });
+
+  // Filter chips
+  document.querySelectorAll('.chip[data-filter]').forEach(el => {
+    el.addEventListener('click', function() {
+      itemsFilter = this.dataset.filter;
+      render();
+    });
+  });
+
+  // Settings
+  const sw = document.getElementById('s-warn');
+  if (sw) sw.addEventListener('change', function() {
+    settings.warningDays = parseInt(this.value); saveSettings(); toast('Saved ✓'); render();
+  });
+  const sm = document.getElementById('s-min');
+  if (sm) sm.addEventListener('change', function() {
+    settings.minRefund = parseInt(this.value); saveSettings(); toast('Saved ✓'); render();
+  });
+  const td = document.getElementById('tog-dark');
+  if (td) td.addEventListener('click', function() {
+    settings.darkMode = !settings.darkMode; saveSettings(); applyDark(); render();
+  });
+}
+
+// ── ADD MODAL ─────────────────────────────────────────────────────────────────
+const CATS = ['Electronics','Food & Grocery','Household','Clothing','Health & Beauty','Appliances','Garden','Other'];
+
+function openAdd() {
+  closeAll();
+  const today = new Date().toISOString().split('T')[0];
+  const catOpts = CATS.map(c => '<option>'+c+'</option>').join('');
+
+  const el = document.createElement('div');
+  el.className = 'ov';
+  el.id = 'add-modal';
+  el.innerHTML =
+    '<div class="sh">' +
+      '<div class="mh"></div>' +
+      '<div class="mt">Add Purchase</div>' +
+
+      // Receipt scan section
+      '<div class="ff">' +
+        '<label class="fl">Scan Receipt with AI (optional)</label>' +
+        '<div class="sa" id="scan-area">' +
+          '<div class="sai">📷</div>' +
+          '<div class="sat">Tap to scan a receipt</div>' +
+          '<div class="sas">Claude will read and fill in the details</div>' +
+        '</div>' +
+        '<input type="file" id="scan-file" accept="image/*" style="display:none"/>' +
+        '<div id="scan-result" style="display:none"></div>' +
+      '</div>' +
+
+      '<div id="add-err" class="ferr"></div>' +
+      '<div class="ff"><label class="fl">Item Name *</label><input class="fi" id="a-name" placeholder="e.g. Sony TV 65-inch" autocomplete="off"/></div>' +
+      '<div class="ff"><label class="fl">Item # (optional)</label><input class="fi" id="a-num" placeholder="e.g. 123456" inputmode="numeric" autocomplete="off"/></div>' +
+      '<div class="ff"><label class="fl">Category</label><select class="fi" id="a-cat">'+catOpts+'</select></div>' +
+      '<div class="fg2">' +
+        '<div class="ff"><label class="fl">Purchase Price *</label><input class="fi" id="a-price" type="number" step="0.01" placeholder="0.00" inputmode="decimal"/></div>' +
+        '<div class="ff"><label class="fl">Current Price</label><input class="fi" id="a-curr" type="number" step="0.01" placeholder="0.00" inputmode="decimal"/></div>' +
+      '</div>' +
+      '<div class="ff"><label class="fl">Purchase Date *</label><input class="fi" id="a-date" type="date" value="'+today+'"/></div>' +
+      '<button class="bp" id="a-submit">Add Item</button>' +
+    '</div>';
+
+  document.body.appendChild(el);
+
+  // Close on overlay tap
+  el.addEventListener('click', function(e) { if (e.target===el) closeAll(); });
+
+  // Scan
+  document.getElementById('scan-area').addEventListener('click', function() {
+    document.getElementById('scan-file').click();
+  });
+  document.getElementById('scan-file').addEventListener('change', handleScan);
+
+  // Submit
+  document.getElementById('a-submit').addEventListener('click', submitAdd);
+}
+
+function submitAdd() {
+  const name  = document.getElementById('a-name').value.trim();
+  const num   = document.getElementById('a-num').value.trim();
+  const cat   = document.getElementById('a-cat').value;
+  const price = document.getElementById('a-price').value;
+  const curr  = document.getElementById('a-curr').value;
+  const date  = document.getElementById('a-date').value;
+  const err   = document.getElementById('add-err');
+
+  err.style.display = 'none';
+  if (!name)              { err.textContent='Item name is required';       err.style.display=''; return; }
+  if (!price||isNaN(+price)) { err.textContent='Valid purchase price required'; err.style.display=''; return; }
+  if (!date)              { err.textContent='Purchase date is required';   err.style.display=''; return; }
+
+  items.unshift({
+    id: uid(), name, itemNumber:num, category:cat,
+    purchasePrice:+price, currentPrice:curr?+curr:null,
+    purchaseDate:date, claimed:false, createdAt:new Date().toISOString()
+  });
+  saveItems();
+  closeAll();
+  toast('Item added! ✓');
+  render();
+}
+
+// ── RECEIPT SCAN ──────────────────────────────────────────────────────────────
+async function handleScan(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const resultEl = document.getElementById('scan-result');
+  resultEl.style.display = '';
+  resultEl.innerHTML = '<div style="text-align:center;padding:16px"><div class="spin"></div><div style="font-size:12px;color:var(--sub);margin-top:8px">Reading receipt...</div></div>';
+
+  try {
+    const b64 = await fileToB64(file);
+    const imgData = b64.split(',')[1];
+    const mediaType = file.type || 'image/jpeg';
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:mediaType, data:imgData}},
+            {type:'text', text:'This is a Costco receipt. Extract: item name, item number (if visible), price paid, and purchase date. Respond ONLY with valid JSON like: {"name":"","itemNumber":"","price":"","date":"YYYY-MM-DD"}. If multiple items, return the first/most expensive one. If a field is not visible, use empty string.'}
+          ]
+        }]
+      })
+    });
+
+    const data = await resp.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+
+    // Fill in the form
+    if (parsed.name)       document.getElementById('a-name').value  = parsed.name;
+    if (parsed.itemNumber) document.getElementById('a-num').value   = parsed.itemNumber;
+    if (parsed.price)      document.getElementById('a-price').value = parsed.price.replace(/[^0-9.]/g,'');
+    if (parsed.date)       document.getElementById('a-date').value  = parsed.date;
+
+    // Try to match category
+    if (parsed.name) {
+      const lower = parsed.name.toLowerCase();
+      if (lower.match(/tv|laptop|phone|tablet|camera|computer|audio|speaker/)) document.getElementById('a-cat').value='Electronics';
+      else if (lower.match(/food|snack|drink|beverage|organic|coffee|meat|cheese/)) document.getElementById('a-cat').value='Food & Grocery';
+    }
+
+    resultEl.innerHTML =
+      '<div class="sres">' +
+        '<div class="srh">✓ Receipt scanned — fields pre-filled</div>' +
+        (parsed.name?'<div class="srr">📦 '+escH(parsed.name)+'</div>':'') +
+        (parsed.price?'<div class="srr">💵 $'+escH(parsed.price)+'</div>':'') +
+        (parsed.date?'<div class="srr">📅 '+escH(parsed.date)+'</div>':'') +
+        '<div style="font-size:11px;color:var(--sub);margin-top:5px">Review and edit below before saving</div>' +
+      '</div>';
+  } catch(err) {
+    resultEl.innerHTML = '<div style="background:#fdecea;border-radius:10px;padding:10px;font-size:12px;color:#c62828">Could not read receipt — please fill in manually.</div>';
+    console.error(err);
+  }
+  e.target.value = '';
+}
+
+function fileToB64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result);
+    r.onerror = () => rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ── DETAIL MODAL ──────────────────────────────────────────────────────────────
+function openDetail(id) {
+  const item = items.find(i => i.id===id);
+  if (!item) return;
+  showDetail(item);
+}
+
+function showDetail(item) {
+  closeAll();
+
+  const u   = urgency(item);
+  const uc  = UC[u];
+  const d   = daysLeft(item.purchaseDate);
+  const pct = pctDrop(item.purchasePrice, item.currentPrice);
+  const r   = refund(item.purchasePrice, item.currentPrice);
+  const searchUrl = 'https://www.costco.com/CatalogSearch?keyword='+encodeURIComponent(item.name);
+
+  const pctBanner = pct
+    ? '<div class="pctb"><span>↓ '+pct+'% price drop on this item</span></div>' : '';
+
+  const daysBox = (!item.claimed && u!=='expired')
+    ? '<div class="ubox" style="background:'+uc.bg+'"><span style="color:'+uc.color+';font-weight:600;font-size:13px">Days left to claim</span><span style="color:'+uc.color+';font-weight:700;font-size:20px;font-family:\'DM Mono\',monospace">'+d+'</span></div>'
+    : '';
+
+  const receiptSection = item.receiptImg
+    ? '<div class="ff"><div class="fl">Receipt Photo</div><img src="'+item.receiptImg+'" class="rthumb" id="d-rthumb" alt="receipt"/><button class="bo" style="padding:8px;font-size:12px" id="d-replace">📷 Replace photo</button><input type="file" id="d-rfile" accept="image/*" style="display:none"/></div>'
+    : '<div class="ff"><label class="fl">Attach Receipt Photo</label><div class="sa" id="d-attach"><div class="sai">🧾</div><div class="sat">Tap to attach receipt</div></div><input type="file" id="d-rfile" accept="image/*" style="display:none"/></div>';
+
+  const updatePrice = (!item.claimed && u!=='expired')
+    ? '<div class="ff"><label class="fl">Update Current Price</label><div class="uprow"><input class="fi" id="d-price" type="number" step="0.01" placeholder="e.g. 39.99" value="'+(item.currentPrice||'')+'" inputmode="decimal" style="flex:1"/><button class="bb" id="d-save">Save</button></div></div>'
+    : '';
+
+  const claimBtn = (!item.claimed && u!=='expired' && r>=settings.minRefund)
+    ? '<button class="bp" style="margin-bottom:10px;background:linear-gradient(135deg,#E31837,#8b0000)" id="d-claim">🎉 Mark as Claimed — +$'+fmt(r)+'</button>'
+    : '';
+
+  const el = document.createElement('div');
+  el.className = 'ov';
+  el.id = 'detail-modal';
+  el.innerHTML =
+    '<div class="sh">' +
+      '<div class="mh"></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">' +
+        '<div>' +
+          '<div style="font-size:19px;font-weight:700;color:var(--text)">'+escH(item.name)+'</div>' +
+          (item.itemNumber?'<div style="font-size:12px;color:var(--sub);font-family:\'DM Mono\',monospace">Item #'+escH(item.itemNumber)+'</div>':'') +
+          '<div style="font-size:12px;color:var(--sub)">'+escH(item.category)+' · Bought '+new Date(item.purchaseDate).toLocaleDateString()+'</div>' +
+        '</div>' +
+        '<span class="badge" style="background:'+uc.bg+';color:'+uc.color+';flex-shrink:0;margin-left:8px">'+uc.label+'</span>' +
+      '</div>' +
+      '<div class="pcells">' +
+        '<div class="pc"><div class="pcl">Paid</div><div class="pcv">$'+fmt(item.purchasePrice)+'</div></div>' +
+        '<div class="pc"><div class="pcl">Current</div><div class="pcv" style="color:#2e7d32">'+(item.currentPrice?'$'+fmt(item.currentPrice):'–')+'</div></div>' +
+        '<div class="pc"><div class="pcl">Refund</div><div class="pcv" style="color:#E31837">'+(r>0?'+$'+fmt(r):'–')+'</div></div>' +
+      '</div>' +
+      pctBanner + daysBox +
+      '<a class="clink" href="'+searchUrl+'" target="_blank">🔍 Search on Costco.com →</a>' +
+      receiptSection + updatePrice +
+      '<div style="display:flex;flex-direction:column;gap:9px;margin-top:4px">' +
+        claimBtn +
+        '<button class="bo" id="d-delete">Delete Item</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(el);
+
+  // ── All listeners attached directly — no onclick with IDs ──
+
+  // Close on overlay tap
+  el.addEventListener('click', e => { if (e.target===el) closeAll(); });
+
+  // Delete — custom confirm, no native confirm()
+  document.getElementById('d-delete').addEventListener('click', function() {
+    showConfirm('Delete this item?', 'This cannot be undone.', function() {
+      items = items.filter(i => i.id !== item.id);
+      saveItems();
+      closeAll();
+      toast('Item deleted');
+      render();
+    });
+  });
+
+  // Claim
+  const claimEl = document.getElementById('d-claim');
+  if (claimEl) claimEl.addEventListener('click', function() {
+    const r2 = refund(item.purchasePrice, item.currentPrice);
+    item.claimed    = true;
+    item.claimedAt  = new Date().toISOString();
+    claims.unshift({id:uid(), itemId:item.id, itemName:item.name, refundAmount:r2, claimedAt:item.claimedAt});
+    saveItems(); saveClaims();
+    closeAll();
+    toast('Claimed $'+fmt(r2)+' refund! 🎉');
+    render();
+  });
+
+  // Save price
+  const saveEl = document.getElementById('d-save');
+  if (saveEl) saveEl.addEventListener('click', function() {
+    const val = document.getElementById('d-price').value;
+    if (!val || isNaN(+val)) { toast('Enter a valid price'); return; }
+    item.currentPrice = +val;
+    saveItems();
+    toast('Price updated ✓');
+    showDetail(item);
+    render();
+  });
+
+  // Receipt attach
+  const attachEl = document.getElementById('d-attach');
+  if (attachEl) attachEl.addEventListener('click', () => document.getElementById('d-rfile').click());
+
+  // Receipt replace
+  const replaceEl = document.getElementById('d-replace');
+  if (replaceEl) replaceEl.addEventListener('click', () => document.getElementById('d-rfile').click());
+
+  // Receipt view full
+  const rthumb = document.getElementById('d-rthumb');
+  if (rthumb) rthumb.addEventListener('click', function() {
+    const fs = document.createElement('div');
+    fs.className = 'rfs';
+    fs.innerHTML = '<img src="'+item.receiptImg+'" alt="receipt"/>';
+    fs.addEventListener('click', () => fs.remove());
+    document.body.appendChild(fs);
+  });
+
+  // Receipt file input
+  document.getElementById('d-rfile').addEventListener('change', async function() {
+    if (!this.files[0]) return;
+    try {
+      const b64 = await fileToB64(this.files[0]);
+      item.receiptImg = b64;
+      saveItems();
+      toast('Receipt saved ✓');
+      showDetail(item);
+    } catch(e) { toast('Could not save photo'); }
+    this.value = '';
+  });
+}
+
+// ── CONFIRM DIALOG ────────────────────────────────────────────────────────────
+function showConfirm(title, msg, onConfirm) {
+  const el = document.createElement('div');
+  el.className = 'ov center';
+  el.id = 'confirm-modal';
+  el.innerHTML =
+    '<div class="sh center" style="max-width:310px;text-align:center">' +
+      '<div style="font-size:28px;margin-bottom:10px">🗑️</div>' +
+      '<div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px">'+escH(title)+'</div>' +
+      '<div style="font-size:13px;color:var(--sub);margin-bottom:20px">'+escH(msg)+'</div>' +
+      '<div style="display:flex;gap:10px">' +
+        '<button class="bo" style="flex:1" id="conf-cancel">Cancel</button>' +
+        '<button class="bp" style="flex:1;background:#e53935" id="conf-ok">Delete</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(el);
+
+  document.getElementById('conf-cancel').addEventListener('click', function() { el.remove(); });
+  document.getElementById('conf-ok').addEventListener('click', function() { el.remove(); onConfirm(); });
+}
+
+// ── Close all modals ──────────────────────────────────────────────────────────
+function closeAll() {
+  ['add-modal','detail-modal','confirm-modal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  });
+}
+
+// ── Shared ────────────────────────────────────────────────────────────────────
+function empty(icon, msg) {
+  return '<div class="empty"><div class="eico">'+icon+'</div><div class="emsg">'+msg+'</div></div>';
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+checkNotifBtn();
+fireNotif();
+render();
+</script>
+
+<script>
+// PWA manifest (inline)
+(function(){
+  const m = {
+    name:'Costco Price Match Tracker', short_name:'CPM Tracker',
+    start_url:'.', display:'standalone',
+    background_color:'#E31837', theme_color:'#E31837',
+    icons:[{src:'', sizes:'192x192', type:'image/png'}]
+  };
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 192;
+    const ctx = canvas.getContext('2d');
+    const r = 38;
+    ctx.beginPath();
+    ctx.moveTo(r,0); ctx.lineTo(192-r,0); ctx.quadraticCurveTo(192,0,192,r);
+    ctx.lineTo(192,192-r); ctx.quadraticCurveTo(192,192,192-r,192);
+    ctx.lineTo(r,192); ctx.quadraticCurveTo(0,192,0,192-r);
+    ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.closePath(); ctx.clip();
+    ctx.fillStyle='#E31837'; ctx.fillRect(0,0,96,192);
+    ctx.fillStyle='#0061A8'; ctx.fillRect(96,0,96,192);
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(96,18); ctx.lineTo(96,174); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='900 52px Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('CPM',96,100);
+    const png = canvas.toDataURL('image/png');
+    m.icons[0].src = png;
+    const ati = document.getElementById('ati');
+    if (ati) ati.href = png;
+  } catch(e){}
+  const blob = new Blob([JSON.stringify(m)], {type:'application/json'});
+  const link = document.createElement('link');
+  link.rel = 'manifest'; link.href = URL.createObjectURL(blob);
+  document.head.appendChild(link);
+})();
+</script>
+</body>
+</html>
