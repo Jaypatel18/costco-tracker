@@ -40,23 +40,34 @@ body {
 
 /* ── DAY / DATE row ────────────────────────────────── */
 .day-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 7px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid #bbb;
   background: #f9f6f0;
   font-weight: 700;
   font-size: 13px;
 }
+.day-row .left-cell {
+  padding: 7px 12px;
+}
+.day-row .right-cell {
+  padding: 7px 12px;
+  border-left: 1px solid #bbb;
+}
 
 /* ── PAY OUT label ─────────────────────────────────── */
 .payout-label {
-  text-align: right;
-  padding: 5px 16px 3px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   font-weight: 700;
   font-size: 13px;
   background: #f9f6f0;
   border-bottom: 1px solid #bbb;
+}
+.payout-label .left-cell { padding: 5px 12px 3px; }
+.payout-label .right-cell {
+  padding: 5px 12px 3px;
+  border-left: 1px solid #bbb;
 }
 
 /* ── Two-column section ────────────────────────────── */
@@ -75,7 +86,7 @@ body {
   padding: 6px 12px;
   letter-spacing: .04em;
 }
-.col-header.right { text-align: right; }
+.col-header.right { text-align: left; }
 
 .hash-row {
   display: flex;
@@ -138,7 +149,16 @@ body {
   min-height: 32px;
   align-items: center;
 }
-.note-row.right { justify-content: flex-end; }
+.note-row.two-cell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0;
+}
+.note-row.two-cell .left-cell { padding: 7px 12px; }
+.note-row.two-cell .right-cell {
+  padding: 7px 12px;
+  border-left: 1px solid #bbb;
+}
 
 @media print {
   body { background: white; padding: 0; }
@@ -156,12 +176,15 @@ body {
 
   <!-- DAY / DATE -->
   <div class="day-row">
-    <span>DAY:</span>
-    <span>DATE:</span>
+    <div class="left-cell">DAY:</div>
+    <div class="right-cell">DATE:</div>
   </div>
 
   <!-- PAY OUT label -->
-  <div class="payout-label">PAY OUT</div>
+  <div class="payout-label">
+    <div class="left-cell"></div>
+    <div class="right-cell">PAY OUT</div>
+  </div>
 
   <!-- Check Paid / CASH PAID -->
   <div class="two-col">
@@ -223,7 +246,10 @@ body {
 
   <!-- Notes -->
   <div class="bottom-section">
-    <div class="note-row right"><span>Service A/C Note:</span></div>
+    <div class="note-row two-cell">
+      <div class="left-cell"></div>
+      <div class="right-cell"><span>Service A/C Note:</span></div>
+    </div>
     <div class="note-row"><span>NOTES:</span></div>
     <div class="note-row"><span>Prepared by:</span></div>
   </div>
