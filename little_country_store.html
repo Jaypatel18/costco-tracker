@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Little Country Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@700&family=Libre+Baskerville:wght@700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #c9bfa8;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+  font-family: 'Source Code Pro', monospace;
+}
+
+.page {
+  width: 760px;
+  background: #fff;
+  border: 1px solid #999;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+}
+
+/* ── Title row ─────────────────────────────────────── */
+.title-row {
+  background: #1b3a1f;
+  padding: 14px 20px 12px;
+  text-align: center;
+  border-bottom: 3px solid #8a6e2f;
+}
+.title-text {
+  font-family: 'Noto Sans Gujarati', 'Libre Baskerville', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .02em;
+  line-height: 1.4;
+}
+
+/* ── DAY / DATE row ────────────────────────────────── */
+.day-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 16px;
+  border-bottom: 1px solid #bbb;
+  background: #f9f6f0;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ── PAY OUT label ─────────────────────────────────── */
+.payout-label {
+  text-align: right;
+  padding: 5px 16px 3px;
+  font-weight: 700;
+  font-size: 13px;
+  background: #f9f6f0;
+  border-bottom: 1px solid #bbb;
+}
+
+/* ── Two-column section ────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid #1b3a1f;
+}
+.col:first-child { border-right: 1px solid #bbb; }
+
+.col-header {
+  background: #1b3a1f;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 12px;
+  letter-spacing: .04em;
+}
+.col-header.right { text-align: right; }
+
+.hash-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  min-height: 30px;
+  border-bottom: 1px solid #ddd;
+  font-size: 13px;
+}
+.hash-row:nth-child(even) { background: #f3f8f3; }
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #e8f0e8;
+  font-weight: 700;
+  font-size: 13px;
+  border-top: 1px solid #aaa;
+}
+
+/* ── Fields section ────────────────────────────────── */
+.fields-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid #1b3a1f;
+}
+.fields-col:first-child { border-right: 1px solid #bbb; }
+
+.field-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  min-height: 31px;
+  align-items: center;
+  font-size: 13px;
+  border-bottom: 1px solid #ddd;
+}
+.field-row:nth-child(odd) { background: #f3f8f3; }
+.field-row.empty { background: #fff; }
+
+/* ── Total fields row ──────────────────────────────── */
+.total-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid #1b3a1f;
+}
+.total-fields .total-row { border-top: none; }
+.total-fields .total-row:first-child { border-right: 1px solid #aaa; }
+
+/* ── Bottom notes ──────────────────────────────────── */
+.bottom-section { background: #f9f6f0; }
+
+.note-row {
+  display: flex;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid #bbb;
+  min-height: 32px;
+  align-items: center;
+}
+.note-row.right { justify-content: flex-end; }
+
+@media print {
+  body { background: white; padding: 0; }
+  .page { box-shadow: none; width: 100%; border: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Title -->
+  <div class="title-row">
+    <div class="title-text">જય મા લક્ષ્મી &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LITTLE COUNTRY STORE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; જય શ્રી સ્વામિનારાયણ</div>
+  </div>
+
+  <!-- DAY / DATE -->
+  <div class="day-row">
+    <span>DAY:</span>
+    <span>DATE:</span>
+  </div>
+
+  <!-- PAY OUT label -->
+  <div class="payout-label">PAY OUT</div>
+
+  <!-- Check Paid / CASH PAID -->
+  <div class="two-col">
+    <div class="col">
+      <div class="col-header">Check Paid =</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="total-row"><span>TOTAL $ =</span></div>
+    </div>
+    <div class="col">
+      <div class="col-header right">CASH PAID =</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="hash-row">#</div>
+      <div class="total-row"><span>TOTAL $ =</span></div>
+    </div>
+  </div>
+
+  <!-- Fields -->
+  <div class="fields-section">
+    <div class="fields-col">
+      <div class="field-row"><span>Cash at End =</span></div>
+      <div class="field-row"><span>VIGO Deposit =</span></div>
+      <div class="field-row"><span>Money Order Deposit =</span></div>
+      <div class="field-row"><span>Check Deposit =</span></div>
+      <div class="field-row"><span>Lotto Paid =</span></div>
+      <div class="field-row"><span>Scratch Off Paid =</span></div>
+      <div class="field-row"><span>Cash Pay Out =</span></div>
+      <div class="field-row"><span>W.Union Pay =</span></div>
+      <div class="field-row"><span>Change at End =</span></div>
+      <div class="field-row"><span>Credit Card =</span></div>
+    </div>
+    <div class="fields-col">
+      <div class="field-row"><span>Cash on Hand =</span></div>
+      <div class="field-row"><span>TOTAL SALE =</span></div>
+      <div class="field-row"><span>Lotto Sale =</span></div>
+      <div class="field-row"><span>Scratch Off Sale =</span></div>
+      <div class="field-row"><span>Cash In =</span></div>
+      <div class="field-row"><span>Change on Hand =</span></div>
+      <div class="field-row"><span>VIGO =</span></div>
+      <div class="field-row"><span>Money Order =</span></div>
+      <div class="field-row"><span>PHONE CARD =</span></div>
+      <div class="field-row empty"></div>
+    </div>
+  </div>
+
+  <!-- Totals -->
+  <div class="total-fields">
+    <div class="total-row"><span>Total =</span></div>
+    <div class="total-row"><span>Total =</span></div>
+  </div>
+
+  <!-- Notes -->
+  <div class="bottom-section">
+    <div class="note-row right"><span>Service A/C Note:</span></div>
+    <div class="note-row"><span>NOTES:</span></div>
+    <div class="note-row"><span>Prepared by:</span></div>
+  </div>
+
+</div>
+</body>
+</html>
