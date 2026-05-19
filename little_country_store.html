@@ -2,9 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Little Country Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@700&family=Libre+Baskerville:wght@700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+
+<!-- Preconnect so fonts load fast even on GitHub Pages -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@700&family=Source+Code+Pro:wght@500;700&display=swap" rel="stylesheet">
+
 <style>
+/*
+  Font strategy: Source Code Pro is the intended font.
+  Fallback chain uses only monospace fonts so layout stays
+  identical whether the web font loads or not.
+  'Courier New' is guaranteed on every OS and has very similar
+  metrics to Source Code Pro — no layout shift.
+*/
+:root {
+  --font-mono: 'Source Code Pro', 'Courier New', Courier, monospace;
+  --font-guj:  'Noto Sans Gujarati', 'Courier New', monospace;
+  --green-dark: #1b3a1f;
+  --green-mid:  #e8f0e8;
+  --stripe:     #f3f8f3;
+  --bg:         #f9f6f0;
+  --border:     #bbb;
+  --border-lt:  #ddd;
+  --gold:       #8a6e2f;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -12,7 +37,11 @@ body {
   display: flex;
   justify-content: center;
   padding: 40px 20px;
-  font-family: 'Source Code Pro', monospace;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  /* Prevent OS-level font smoothing differences */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .page {
@@ -22,146 +51,107 @@ body {
   box-shadow: 0 4px 24px rgba(0,0,0,.18);
 }
 
-/* ── Title row ─────────────────────────────────────── */
+/* ── Title ──────────────────────────────────────────── */
 .title-row {
-  background: #1b3a1f;
-  padding: 14px 20px 12px;
-  text-align: center;
-  border-bottom: 3px solid #8a6e2f;
+  background: var(--green-dark);
+  padding: 13px 16px 11px;
+  border-bottom: 3px solid var(--gold);
+  /* Use a table so three cells are evenly spaced — no flex wrapping quirks */
+  display: table;
+  width: 100%;
+  table-layout: fixed;
 }
-.title-text {
-  font-family: 'Noto Sans Gujarati', 'Libre Baskerville', serif;
-  font-size: 20px;
-  font-weight: 700;
+.title-row .t-cell {
+  display: table-cell;
+  vertical-align: middle;
   color: #fff;
-  letter-spacing: .02em;
-  line-height: 1.4;
-}
-
-/* ── DAY / DATE row ────────────────────────────────── */
-.day-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid #bbb;
-  background: #f9f6f0;
   font-weight: 700;
   font-size: 13px;
+  line-height: 1.3;
 }
-.day-row .left-cell {
-  padding: 7px 12px;
-}
-.day-row .right-cell {
-  padding: 7px 12px;
-  border-left: 1px solid #bbb;
-}
+.title-row .t-guj  { font-family: var(--font-guj); font-size: 14px; }
+.title-row .t-name { text-align: center; font-size: 20px; letter-spacing: .06em; }
+.title-row .t-right { text-align: right; }
 
-/* ── PAY OUT label ─────────────────────────────────── */
-.payout-label {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  font-weight: 700;
-  font-size: 13px;
-  background: #f9f6f0;
-  border-bottom: 1px solid #bbb;
-}
-.payout-label .left-cell { padding: 5px 12px 3px; }
-.payout-label .right-cell {
-  padding: 5px 12px 3px;
-  border-left: 1px solid #bbb;
-}
-
-/* ── Two-column section ────────────────────────────── */
+/* ── Shared two-col grid ────────────────────────────── */
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 2px solid #1b3a1f;
 }
-.col:first-child { border-right: 1px solid #bbb; }
+.two-col > *:first-child { border-right: 1px solid var(--border); }
 
+/* ── DAY / DATE ─────────────────────────────────────── */
+.day-row {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+}
+.day-row .cell {
+  padding: 7px 12px;
+}
+
+/* ── PAY OUT ────────────────────────────────────────── */
+.payout-row {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+}
+.payout-row .cell { padding: 5px 12px 4px; }
+
+/* ── Section header (green bar) ─────────────────────── */
 .col-header {
-  background: #1b3a1f;
+  background: var(--green-dark);
   color: #fff;
   font-weight: 700;
-  font-size: 13px;
-  padding: 6px 12px;
-  letter-spacing: .04em;
+  padding: 7px 12px;
+  letter-spacing: .03em;
 }
-.col-header.right { text-align: left; }
 
+/* ── # rows ─────────────────────────────────────────── */
 .hash-row {
-  display: flex;
-  align-items: center;
   padding: 5px 12px;
   min-height: 30px;
-  border-bottom: 1px solid #ddd;
-  font-size: 13px;
-}
-.hash-row:nth-child(even) { background: #f3f8f3; }
-
-.total-row {
+  border-bottom: 1px solid var(--border-lt);
   display: flex;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: #e8f0e8;
+  align-items: center;
+}
+.hash-row:nth-child(even) { background: var(--stripe); }
+
+/* ── TOTAL bar ──────────────────────────────────────── */
+.total-bar {
+  background: var(--green-mid);
   font-weight: 700;
-  font-size: 13px;
-  border-top: 1px solid #aaa;
+  padding: 7px 12px;
+  border-top: 1px solid var(--border);
 }
 
-/* ── Fields section ────────────────────────────────── */
-.fields-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 2px solid #1b3a1f;
+/* ── Field rows ─────────────────────────────────────── */
+.fields-wrap {
+  border-bottom: 2px solid var(--green-dark);
 }
-.fields-col:first-child { border-right: 1px solid #bbb; }
-
 .field-row {
-  display: flex;
-  justify-content: space-between;
   padding: 6px 12px;
   min-height: 31px;
-  align-items: center;
-  font-size: 13px;
-  border-bottom: 1px solid #ddd;
-}
-.field-row:nth-child(odd) { background: #f3f8f3; }
-.field-row.empty { background: #fff; }
-
-/* ── Total fields row ──────────────────────────────── */
-.total-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 2px solid #1b3a1f;
-}
-.total-fields .total-row { border-top: none; }
-.total-fields .total-row:first-child { border-right: 1px solid #aaa; }
-
-/* ── Bottom notes ──────────────────────────────────── */
-.bottom-section { background: #f9f6f0; }
-
-.note-row {
+  border-bottom: 1px solid var(--border-lt);
   display: flex;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  border-bottom: 1px solid #bbb;
-  min-height: 32px;
   align-items: center;
 }
-.note-row.two-cell {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 0;
-}
-.note-row.two-cell .left-cell { padding: 7px 12px; }
-.note-row.two-cell .right-cell {
+.field-row:nth-child(odd) { background: var(--stripe); }
+.field-row.empty { background: #fff; min-height: 31px; }
+
+/* ── Bottom notes ───────────────────────────────────── */
+.bottom-section { background: var(--bg); }
+.note-row {
   padding: 7px 12px;
-  border-left: 1px solid #bbb;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
 }
 
 @media print {
-  body { background: white; padding: 0; }
+  body { background: #fff; padding: 0; }
   .page { box-shadow: none; width: 100%; border: none; }
 }
 </style>
@@ -171,24 +161,26 @@ body {
 
   <!-- Title -->
   <div class="title-row">
-    <div class="title-text">જય મા લક્ષ્મી &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LITTLE COUNTRY STORE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; જય શ્રી સ્વામિનારાયણ</div>
+    <div class="t-cell t-guj">જય મા લક્ષ્મી</div>
+    <div class="t-cell t-name">LITTLE COUNTRY STORE</div>
+    <div class="t-cell t-guj t-right">જય શ્રી સ્વામિનારાયણ</div>
   </div>
 
   <!-- DAY / DATE -->
-  <div class="day-row">
-    <div class="left-cell">DAY:</div>
-    <div class="right-cell">DATE:</div>
+  <div class="day-row two-col">
+    <div class="cell">DAY:</div>
+    <div class="cell">DATE:</div>
   </div>
 
-  <!-- PAY OUT label -->
-  <div class="payout-label">
-    <div class="left-cell"></div>
-    <div class="right-cell">PAY OUT</div>
+  <!-- PAY OUT -->
+  <div class="payout-row two-col">
+    <div class="cell"></div>
+    <div class="cell">PAY OUT</div>
   </div>
 
   <!-- Check Paid / CASH PAID -->
-  <div class="two-col">
-    <div class="col">
+  <div class="two-col" style="border-bottom: 2px solid var(--green-dark);">
+    <div>
       <div class="col-header">Check Paid =</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
@@ -196,62 +188,62 @@ body {
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
-      <div class="total-row"><span>TOTAL $ =</span></div>
+      <div class="total-bar">TOTAL $ =</div>
     </div>
-    <div class="col">
-      <div class="col-header right">CASH PAID =</div>
+    <div>
+      <div class="col-header">CASH PAID =</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
       <div class="hash-row">#</div>
-      <div class="total-row"><span>TOTAL $ =</span></div>
+      <div class="total-bar">TOTAL $ =</div>
     </div>
   </div>
 
   <!-- Fields -->
-  <div class="fields-section">
-    <div class="fields-col">
-      <div class="field-row"><span>Cash at End =</span></div>
-      <div class="field-row"><span>VIGO Deposit =</span></div>
-      <div class="field-row"><span>Money Order Deposit =</span></div>
-      <div class="field-row"><span>Check Deposit =</span></div>
-      <div class="field-row"><span>Lotto Paid =</span></div>
-      <div class="field-row"><span>Scratch Off Paid =</span></div>
-      <div class="field-row"><span>Cash Pay Out =</span></div>
-      <div class="field-row"><span>W.Union Pay =</span></div>
-      <div class="field-row"><span>Change at End =</span></div>
-      <div class="field-row"><span>Credit Card =</span></div>
+  <div class="two-col fields-wrap">
+    <div>
+      <div class="field-row">Cash at End =</div>
+      <div class="field-row">VIGO Deposit =</div>
+      <div class="field-row">Money Order Deposit =</div>
+      <div class="field-row">Check Deposit =</div>
+      <div class="field-row">Lotto Paid =</div>
+      <div class="field-row">Scratch Off Paid =</div>
+      <div class="field-row">Cash Pay Out =</div>
+      <div class="field-row">W.Union Pay =</div>
+      <div class="field-row">Change at End =</div>
+      <div class="field-row">Credit Card =</div>
     </div>
-    <div class="fields-col">
-      <div class="field-row"><span>Cash on Hand =</span></div>
-      <div class="field-row"><span>TOTAL SALE =</span></div>
-      <div class="field-row"><span>Lotto Sale =</span></div>
-      <div class="field-row"><span>Scratch Off Sale =</span></div>
-      <div class="field-row"><span>Cash In =</span></div>
-      <div class="field-row"><span>Change on Hand =</span></div>
-      <div class="field-row"><span>VIGO =</span></div>
-      <div class="field-row"><span>Money Order =</span></div>
-      <div class="field-row"><span>PHONE CARD =</span></div>
+    <div>
+      <div class="field-row">Cash on Hand =</div>
+      <div class="field-row">TOTAL SALE =</div>
+      <div class="field-row">Lotto Sale =</div>
+      <div class="field-row">Scratch Off Sale =</div>
+      <div class="field-row">Cash In =</div>
+      <div class="field-row">Change on Hand =</div>
+      <div class="field-row">VIGO =</div>
+      <div class="field-row">Money Order =</div>
+      <div class="field-row">PHONE CARD =</div>
       <div class="field-row empty"></div>
     </div>
   </div>
 
-  <!-- Totals -->
-  <div class="total-fields">
-    <div class="total-row"><span>Total =</span></div>
-    <div class="total-row"><span>Total =</span></div>
+  <!-- Total -->
+  <div class="two-col" style="border-bottom: 2px solid var(--green-dark);">
+    <div class="total-bar" style="border-top:none;">Total =</div>
+    <div class="total-bar" style="border-top:none;">Total =</div>
   </div>
 
   <!-- Notes -->
   <div class="bottom-section">
-    <div class="note-row two-cell">
-      <div class="left-cell"></div>
-      <div class="right-cell"><span>Service A/C Note:</span></div>
+    <div class="two-col" style="border-bottom: 1px solid var(--border);">
+      <div class="note-row"></div>
+      <div class="note-row">Service A/C Note:</div>
     </div>
-    <div class="note-row"><span>NOTES:</span></div>
-    <div class="note-row"><span>Prepared by:</span></div>
+    <div class="note-row">NOTES:</div>
+    <div class="note-row">Prepared by:</div>
   </div>
 
 </div>
