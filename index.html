@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Little Country Store – Daily Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --desk: #e9e6df;
+  --paper: #fdfcf9;
+  --rule: #d9d5ca;
+  --ink: #1d2f8f;
+  --text: #25262b;
+  --muted: #6c6d75;
+  --accent: #1d2f8f;
+  --accent-text: #ffffff;
+  --total-bg: #eef0fb;
+  --good: #1f6b3a;
+  --shadow: 0 1px 0 rgba(0,0,0,.04), 0 12px 30px -14px rgba(40,36,24,.35);
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #15161a;
+    --paper: #1e2026;
+    --rule: #34363f;
+    --ink: #9fb2ff;
+    --text: #e8e8ec;
+    --muted: #9a9ba6;
+    --accent: #9fb2ff;
+    --accent-text: #11142b;
+    --total-bg: #262a3d;
+    --good: #7fd49c;
+    --shadow: 0 12px 30px -14px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #15161a;
+  --paper: #1e2026;
+  --rule: #34363f;
+  --ink: #9fb2ff;
+  --text: #e8e8ec;
+  --muted: #9a9ba6;
+  --accent: #9fb2ff;
+  --accent-text: #11142b;
+  --total-bg: #262a3d;
+  --good: #7fd49c;
+  --shadow: 0 12px 30px -14px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--text);
+  font-family: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  padding-bottom: 120px;
+}
+.sheet {
+  max-width: 880px;
+  margin: 16px auto;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  border-radius: 4px;
+  padding: 22px 22px 28px;
+}
+@media (min-width: 640px) { .sheet { margin: 32px auto; padding: 32px 40px 36px; } }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; padding-bottom: 16px; border-bottom: 2px solid var(--text); }
+h1 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: .02em; }
+.sub { color: var(--muted); font-size: .85rem; margin-top: 2px; }
+.dateblock { display: flex; align-items: flex-end; gap: 12px; }
+.dateblock .day { font-family: "Caveat", cursive; font-size: 1.9rem; color: var(--ink); line-height: 1; min-width: 6.5ch; }
+
+label.field { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 2px; }
+input, textarea {
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 6px 2px;
+  width: 100%;
+  min-width: 0;
+}
+input:focus, textarea:focus { outline: none; border-bottom-color: var(--ink); box-shadow: 0 1px 0 var(--ink); }
+input[type="date"] { width: auto; font-weight: 600; }
+textarea { resize: vertical; min-height: 64px; border: 1px solid var(--rule); border-radius: 3px; padding: 8px; }
+textarea:focus { box-shadow: 0 0 0 1px var(--ink); }
+
+.cols { display: grid; gap: 28px; margin-top: 22px; }
+@media (min-width: 720px) { .cols { grid-template-columns: 1fr 1fr; gap: 0; } .cols > section:first-child { padding-right: 28px; border-right: 1px solid var(--rule); } .cols > section:last-child { padding-left: 28px; } }
+
+h2 { margin: 0 0 6px; font-size: .95rem; font-weight: 700; }
+.group { margin-bottom: 18px; }
+.group h3 { margin: 0 0 4px; font-size: .85rem; font-weight: 600; color: var(--muted); display: flex; justify-content: space-between; }
+.group h3 output { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.row { display: grid; grid-template-columns: 1fr minmax(0, 150px); align-items: center; gap: 10px; border-bottom: 1px solid var(--rule); padding: 2px 0; }
+.row:last-of-type { border-bottom: 0; }
+.row label { font-size: .95rem; }
+.row .amt { position: relative; }
+.row .amt::before { content: "$"; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .9rem; pointer-events: none; }
+.row input { border-bottom: 0; text-align: right; padding: 8px 2px 8px 16px; font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.row:focus-within { background: var(--total-bg); }
+.row .calc { grid-column: 1 / -1; text-align: right; font-size: .78rem; color: var(--muted); margin-top: -4px; padding-bottom: 4px; display: none; }
+.row .calc.on { display: block; }
+
+.list .row { grid-template-columns: 1.5rem 1fr; }
+.list .row .n { color: var(--muted); font-size: .85rem; }
+
+.coltotal { margin-top: 8px; padding: 12px 14px; background: var(--total-bg); border-radius: 3px; display: flex; justify-content: space-between; align-items: baseline; border-top: 2px solid var(--ink); }
+.coltotal span { font-weight: 700; }
+.coltotal output { font-size: 1.5rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.foot { margin-top: 26px; display: grid; gap: 16px; }
+@media (min-width: 720px) { .foot { grid-template-columns: 1fr 1fr 220px; } }
+.foot .wide { grid-column: 1 / -1; }
+
+.tools { margin-top: 26px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  padding: 11px 18px; border-radius: 6px; border: 1px solid var(--ink);
+  background: transparent; color: var(--ink);
+}
+button:hover { background: var(--total-bg); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+button:disabled { opacity: .6; cursor: progress; }
+button.primary { background: var(--accent); color: var(--accent-text); }
+button.primary:hover { filter: brightness(1.08); background: var(--accent); }
+button.quiet { border-color: var(--rule); color: var(--muted); }
+button.danger { border-color: #b3261e; color: #b3261e; }
+.status { font-size: .88rem; color: var(--good); min-height: 1.2em; }
+
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--paper);
+  border-top: 2px solid var(--ink);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap;
+  box-shadow: 0 -8px 24px -14px rgba(0,0,0,.4);
+}
+.bar .t { display: flex; flex-direction: column; line-height: 1.15; }
+.bar .t small { color: var(--muted); font-size: .72rem; }
+.bar .t output { font-size: 1.15rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) { .bar { gap: 10px; } .bar button { padding: 10px 14px; } }
+@media print { .bar, .tools { display: none; } body { background: #fff; } .sheet { box-shadow: none; } }
+</style>
+</head>
+<body>
+
+<main class="sheet" id="sheet">
+  <header class="top">
+    <div>
+      <h1>Little Country Store</h1>
+      <div class="sub">Daily sheet</div>
+    </div>
+    <div class="dateblock">
+      <div>
+        <label class="field" for="date">Date</label>
+        <input type="date" id="date" data-key="date">
+      </div>
+      <div class="day" id="weekday" aria-live="polite"></div>
+    </div>
+  </header>
+
+  <div class="cols">
+    <!-- LEFT -->
+    <section aria-labelledby="left-h">
+      <h2 id="left-h">Deposits and payouts</h2>
+
+      <div class="group list" id="checkPaid">
+        <h3><span>Check paid</span><output id="checkPaidTotal">$0.00</output></h3>
+      </div>
+
+      <div class="group" id="leftRows"></div>
+
+      <div class="coltotal"><span>Total</span><output id="leftTotal">$0.00</output></div>
+    </section>
+
+    <!-- RIGHT -->
+    <section aria-labelledby="right-h">
+      <h2 id="right-h">Sales and cash</h2>
+
+      <div class="group list" id="cashPaid">
+        <h3><span>Cash paid</span><output id="cashPaidTotal">$0.00</output></h3>
+      </div>
+
+      <div class="group" id="rightRows"></div>
+
+      <div class="coltotal"><span>Total</span><output id="rightTotal">$0.00</output></div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <div>
+      <label class="field" for="serviceNote">Service A/C note</label>
+      <input type="text" id="serviceNote" data-key="serviceNote" autocomplete="off">
+    </div>
+    <div>
+      <label class="field" for="preparedBy">Prepared by</label>
+      <input type="text" id="preparedBy" data-key="preparedBy" autocomplete="off">
+    </div>
+    <div>
+      <label class="field" for="sheetNo">Sheet number</label>
+      <input type="text" id="sheetNo" data-key="sheetNo" autocomplete="off">
+    </div>
+    <div class="wide">
+      <label class="field" for="sendTo">Send to (email address)</label>
+      <input type="email" id="sendTo" data-key="to" autocomplete="email" inputmode="email" placeholder="name@example.com">
+    </div>
+    <div class="wide">
+      <label class="field" for="notes">Notes</label>
+      <textarea id="notes" data-key="notes"></textarea>
+    </div>
+  </div>
+
+  <div class="tools">
+    <button class="quiet" id="copyBtn" type="button">Copy summary</button>
+    <button class="quiet danger" id="clearBtn" type="button">Start new day</button>
+    <span class="status" id="status" role="status" aria-live="polite"></span>
+  </div>
+</main>
+
+<div class="bar">
+  <div class="t"><small>Left total</small><output id="barLeft">$0.00</output></div>
+  <div class="t"><small>Right total</small><output id="barRight">$0.00</output></div>
+  <button class="primary" id="sendBtn" type="button">Send email</button>
+</div>
+
+<script>
+(function () {
+  var DEFAULT_TO = "lcstore825@gmail.com";
+  var STORE = "Little Country Store";
+  var LS_KEY = "lcs-daily-sheet-v1";
+
+  var LEFT = [
+    ["cashAtEnd", "Cash at end"],
+    ["vigoDeposit", "VIGO deposit"],
+    ["moDeposit", "Money order deposit"],
+    ["checkDeposit", "Check deposit"],
+    ["lottoPaid", "Lotto paid"],
+    ["scratchPaid", "Scratch off paid"],
+    ["cashPayOut", "Cash pay out"],
+    ["wuPay", "W. Union pay"],
+    ["changeAtEnd", "Change at end"],
+    ["creditCard", "Credit card", "Add several with +, e.g. 887.87+964.06"]
+  ];
+  var RIGHT = [
+    ["cashOnHand", "Cash on hand"],
+    ["totalSale", "Total sale"],
+    ["lottoSale", "Lotto sale"],
+    ["scratchSale", "Scratch off sale"],
+    ["cashIn", "Cash in"],
+    ["changeOnHand", "Change on hand"],
+    ["vigo", "VIGO"],
+    ["moneyOrder", "Money order"],
+    ["phoneCard", "Phone card"]
+  ];
+  var LIST_N = 6;
+
+  var state = {};
+
+  function $(id) { return document.getElementById(id); }
+
+  /* Parse "887.87+964.06" or "1,200.50" into cents-safe number */
+  function parseAmt(str) {
+    if (str == null) return 0;
+    var s = String(str).replace(/[$,\s]/g, "");
+    if (!s) return 0;
+    var terms = s.match(/[+-]?\d*\.?\d+/g);
+    if (!terms) return 0;
+    var cents = 0;
+    terms.forEach(function (t) { cents += Math.round(parseFloat(t) * 100); });
+    return cents / 100;
+  }
+  function fmt(n) {
+    var neg = n < 0;
+    var v = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (neg ? "-$" : "$") + v;
+  }
+  function isSum(str) { return /\d\s*[+\-]\s*[\d.]/.test(String(str || "")); }
+
+  function buildRows(container, defs, prefix) {
+    defs.forEach(function (d) {
+      var row = document.createElement("div");
+      row.className = "row";
+      var lab = document.createElement("label");
+      lab.htmlFor = "f_" + d[0];
+      lab.textContent = d[1];
+      var wrap = document.createElement("div");
+      wrap.className = "amt";
+      var inp = document.createElement("input");
+      inp.id = "f_" + d[0];
+      inp.type = "text";
+      inp.inputMode = d[2] ? "text" : "decimal";
+      inp.autocomplete = "off";
+      inp.placeholder = d[2] ? "0.00" : "0.00";
+      inp.dataset.key = d[0];
+      inp.dataset.amount = "1";
+      if (d[2]) inp.setAttribute("aria-describedby", "calc_" + d[0]);
+      wrap.appendChild(inp);
+      row.appendChild(lab);
+      row.appendChild(wrap);
+      var calc = document.createElement("div");
+      calc.className = "calc";
+      calc.id = "calc_" + d[0];
+      row.appendChild(calc);
+      container.appendChild(row);
+    });
+  }
+
+  function buildList(container, prefix) {
+    for (var i = 1; i <= LIST_N; i++) {
+      var row = document.createElement("div");
+      row.className = "row";
+      var n = document.createElement("span");
+      n.className = "n";
+      n.textContent = "#";
+      n.setAttribute("aria-hidden", "true");
+      var wrap = document.createElement("div");
+      wrap.className = "amt";
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.inputMode = "decimal";
+      inp.autocomplete = "off";
+      inp.placeholder = "0.00";
+      inp.id = prefix + i;
+      inp.dataset.key = prefix + i;
+      inp.dataset.amount = "1";
+      inp.setAttribute("aria-label", (prefix === "chk" ? "Check paid " : "Cash paid ") + i);
+      wrap.appendChild(inp);
+      row.appendChild(n);
+      row.appendChild(wrap);
+      container.appendChild(row);
+    }
+  }
+
+  function sumKeys(keys) {
+    var c = 0;
+    keys.forEach(function (k) { c += Math.round(parseAmt(state[k]) * 100); });
+    return c / 100;
+  }
+  function listKeys(prefix) {
+    var a = [];
+    for (var i = 1; i <= LIST_N; i++) a.push(prefix + i);
+    return a;
+  }
+
+  function weekdayName(v) {
+    if (!v) return "";
+    var p = v.split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("en-US", { weekday: "long" });
+  }
+  function shortDate(v) {
+    if (!v) return "";
+    var p = v.split("-");
+    return p[1] + "/" + p[2] + "/" + p[0].slice(2);
+  }
+  function todayStr() {
+    var d = new Date();
+    var m = ("0" + (d.getMonth() + 1)).slice(-2), day = ("0" + d.getDate()).slice(-2);
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  function recalc() {
+    var leftTotal = sumKeys(LEFT.map(function (d) { return d[0]; }));
+    var rightTotal = sumKeys(RIGHT.map(function (d) { return d[0]; }));
+    var chk = sumKeys(listKeys("chk"));
+    var csh = sumKeys(listKeys("csh"));
+    $("leftTotal").textContent = fmt(leftTotal);
+    $("rightTotal").textContent = fmt(rightTotal);
+    $("barLeft").textContent = fmt(leftTotal);
+    $("barRight").textContent = fmt(rightTotal);
+    $("checkPaidTotal").textContent = fmt(chk);
+    $("cashPaidTotal").textContent = fmt(csh);
+    $("weekday").textContent = weekdayName(state.date);
+
+    LEFT.concat(RIGHT).forEach(function (d) {
+      var el = $("calc_" + d[0]);
+      if (!el) return;
+      var v = state[d[0]];
+      if (isSum(v)) { el.textContent = "= " + fmt(parseAmt(v)); el.classList.add("on"); }
+      else { el.textContent = ""; el.classList.remove("on"); }
+    });
+    return { left: leftTotal, right: rightTotal, chk: chk, csh: csh };
+  }
+
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) { var o = JSON.parse(raw); if (o && typeof o === "object") state = o; }
+    } catch (e) {}
+  }
+
+  function applyStateToInputs() {
+    document.querySelectorAll("[data-key]").forEach(function (el) {
+      el.value = state[el.dataset.key] || "";
+    });
+  }
+
+  function onInput(e) {
+    var el = e.target;
+    if (!el.dataset || !el.dataset.key) return;
+    state[el.dataset.key] = el.value;
+    recalc();
+    save();
+    clearStatus();
+  }
+
+  function line(label, val) {
+    return label + ": " + (val === "" || val == null ? "-" : fmt(parseAmt(val)));
+  }
+
+  function buildSummary() {
+    var t = recalc();
+    var L = [];
+    L.push(STORE.toUpperCase() + " - DAILY SHEET");
+    L.push("Date: " + shortDate(state.date) + " " + weekdayName(state.date));
+    if (state.sheetNo) L.push("Sheet #: " + state.sheetNo);
+    L.push("");
+    L.push("CHECK PAID");
+    var any = false;
+    listKeys("chk").forEach(function (k, i) {
+      if (parseAmt(state[k]) !== 0) { L.push("  #" + (i + 1) + ": " + fmt(parseAmt(state[k]))); any = true; }
+    });
+    if (!any) L.push("  -");
+    L.push("  Total: " + fmt(t.chk));
+    L.push("");
+    L.push("DEPOSITS AND PAYOUTS");
+    LEFT.forEach(function (d) {
+      var v = state[d[0]];
+      var extra = isSum(v) ? "  (" + String(v).replace(/\s/g, "") + ")" : "";
+      L.push("  " + line(d[1], v) + extra);
+    });
+    L.push("  TOTAL: " + fmt(t.left));
+    L.push("");
+    L.push("CASH PAID");
+    any = false;
+    listKeys("csh").forEach(function (k, i) {
+      if (parseAmt(state[k]) !== 0) { L.push("  #" + (i + 1) + ": " + fmt(parseAmt(state[k]))); any = true; }
+    });
+    if (!any) L.push("  -");
+    L.push("  Total: " + fmt(t.csh));
+    L.push("");
+    L.push("SALES AND CASH");
+    RIGHT.forEach(function (d) { L.push("  " + line(d[1], state[d[0]])); });
+    L.push("  TOTAL: " + fmt(t.right));
+    L.push("");
+    if (state.serviceNote) L.push("Service A/C note: " + state.serviceNote);
+    if (state.notes) { L.push("Notes: " + state.notes); }
+    if (state.preparedBy) L.push("Prepared by: " + state.preparedBy);
+    return L.join("\n");
+  }
+
+  var statusTimer;
+  function setStatus(msg) {
+    $("status").textContent = msg;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(clearStatus, 6000);
+  }
+  function clearStatus() { $("status").textContent = ""; }
+
+  function getTo() {
+    return String(state.to || "").trim();
+  }
+  function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  function openMailApp(to, subject, body) {
+    window.location.href = "mailto:" + to + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  }
+
+  /* Each value becomes its own field so the email arrives as a tidy table */
+  function buildFields() {
+    var t = recalc();
+    var f = {};
+    f["Date"] = shortDate(state.date) + " " + weekdayName(state.date);
+    if (state.sheetNo) f["Sheet #"] = state.sheetNo;
+    listKeys("chk").forEach(function (k, i) {
+      if (parseAmt(state[k]) !== 0) f["Check paid #" + (i + 1)] = fmt(parseAmt(state[k]));
+    });
+    f["Check paid total"] = fmt(t.chk);
+    LEFT.forEach(function (d) {
+      var v = state[d[0]];
+      f[d[1]] = (v === "" || v == null) ? "-" : fmt(parseAmt(v)) + (isSum(v) ? "  (" + String(v).replace(/\s/g, "") + ")" : "");
+    });
+    f["LEFT TOTAL"] = fmt(t.left);
+    listKeys("csh").forEach(function (k, i) {
+      if (parseAmt(state[k]) !== 0) f["Cash paid #" + (i + 1)] = fmt(parseAmt(state[k]));
+    });
+    f["Cash paid total"] = fmt(t.csh);
+    RIGHT.forEach(function (d) {
+      var v = state[d[0]];
+      f[d[1] + " "] = (v === "" || v == null) ? "-" : fmt(parseAmt(v));
+    });
+    f["RIGHT TOTAL"] = fmt(t.right);
+    if (state.serviceNote) f["Service A/C note"] = state.serviceNote;
+    if (state.notes) f["Notes"] = state.notes;
+    if (state.preparedBy) f["Prepared by"] = state.preparedBy;
+    return f;
+  }
+
+  var sending = false;
+  function sendEmail() {
+    if (sending) return;
+    var to = getTo();
+    var $s = $("status");
+    $s.style.color = "";
+    if (!validEmail(to)) {
+      $s.style.color = "#b3261e";
+      $s.textContent = "Type a valid email address in the Send to box first.";
+      $("sendTo").focus();
+      return;
+    }
+    var subject = STORE + " - Daily Sheet - " + shortDate(state.date) + " " + weekdayName(state.date);
+    var payload = buildFields();
+    payload["_subject"] = subject;
+    payload["_captcha"] = "false";
+    payload["_template"] = "table";
+
+    var btn = $("sendBtn");
+    sending = true;
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+    clearTimeout(statusTimer);
+    $s.textContent = "";
+    var old = $("fallbackBtn"); if (old) old.remove();
+
+    fetch("https://formsubmit.co/ajax/" + encodeURIComponent(to), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok || data.success === false || data.success === "false") {
+          throw new Error(data.message || ("Error " + res.status));
+        }
+        return data;
+      });
+    }).then(function (data) {
+      var msg = String(data.message || "");
+      if (/activat|confirm/i.test(msg)) {
+        $s.style.color = "#8a5a00";
+        $s.textContent = "First time sending to " + to + ": open that inbox (check Spam), click the Activate link in the email from FormSubmit, then press Send email again.";
+        clearTimeout(statusTimer);
+      } else {
+        var when = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+        setStatus("Sent to " + to + " at " + when + ".");
+      }
+    }).catch(function (err) {
+      $s.style.color = "#b3261e";
+      $s.textContent = "Email did not send (" + String(err.message || err).slice(0, 120) + "). Check your internet and try again, or use the button below.";
+      showFallback(to, subject);
+    }).then(function () {
+      sending = false;
+      btn.disabled = false;
+      btn.textContent = "Send email";
+    });
+  }
+
+  function showFallback(to, subject) {
+    var id = "fallbackBtn";
+    if ($(id)) return;
+    var b = document.createElement("button");
+    b.id = id; b.type = "button"; b.className = "quiet";
+    b.textContent = "Open in email app instead";
+    b.addEventListener("click", function () { openMailApp(to, subject, buildSummary()); });
+    $("status").parentNode.insertBefore(b, $("status"));
+  }
+
+  function copySummary() {
+    var text = buildSummary();
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      setStatus(ok ? "Summary copied." : "Could not copy. Use Send email instead.");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { setStatus("Summary copied."); }, fallback);
+    } else fallback();
+  }
+
+  var clearArmed = false, clearTimer;
+  function clearDay() {
+    var btn = $("clearBtn");
+    if (!clearArmed) {
+      clearArmed = true;
+      btn.textContent = "Tap again to clear everything";
+      clearTimer = setTimeout(function () { clearArmed = false; btn.textContent = "Start new day"; }, 4000);
+      return;
+    }
+    clearTimeout(clearTimer);
+    clearArmed = false;
+    btn.textContent = "Start new day";
+    var prepared = state.preparedBy || "";
+    state = { date: todayStr(), preparedBy: prepared, to: state.to };
+    applyStateToInputs();
+    recalc();
+    save();
+    setStatus("Sheet cleared for a new day.");
+  }
+
+  function init() {
+    buildList($("checkPaid"), "chk");
+    buildRows($("leftRows"), LEFT);
+    buildList($("cashPaid"), "csh");
+    buildRows($("rightRows"), RIGHT);
+    load();
+    if (!state.date) state.date = todayStr();
+    if (state.to === undefined) state.to = DEFAULT_TO;
+    applyStateToInputs();
+    // hint for credit card
+    var cc = $("f_creditCard");
+    if (cc) cc.placeholder = "0.00 or 887.87+964.06";
+    document.addEventListener("input", onInput);
+    document.addEventListener("change", onInput);
+    $("sendBtn").addEventListener("click", sendEmail);
+    $("copyBtn").addEventListener("click", copySummary);
+    $("clearBtn").addEventListener("click", clearDay);
+    recalc();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
