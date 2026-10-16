@@ -119,6 +119,11 @@ h2 { margin: 0 0 6px; font-size: .95rem; font-weight: 700; }
 .list .row { grid-template-columns: 1.5rem 1fr; }
 .list .row .n { color: var(--muted); font-size: .85rem; }
 
+.list .row.cash { grid-template-columns: minmax(0, 1fr) minmax(0, 120px); }
+.list .row.cash input[type="text"].desc { text-align: left; padding: 8px 2px; font-size: 1rem; }
+.row .auto { grid-column: 1 / -1; text-align: right; font-size: .78rem; color: var(--muted); margin-top: -4px; padding-bottom: 4px; }
+input[readonly] { cursor: default; font-weight: 600; }
+button.add { margin-top: 6px; padding: 8px 14px; font-size: .9rem; }
 .coltotal { margin-top: 8px; padding: 12px 14px; background: var(--total-bg); border-radius: 3px; display: flex; justify-content: space-between; align-items: baseline; border-top: 2px solid var(--ink); }
 .coltotal span { font-weight: 700; }
 .coltotal output { font-size: 1.5rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -241,6 +246,13 @@ button.danger { border-color: #b3261e; color: #b3261e; }
 <script>
 (function () {
   var DEFAULT_TO = "lcstore825@gmail.com";
+
+  /* ---- Google Apps Script sender (clean emails from your own Gmail) ----
+     Paste the Web app URL and the secret word you chose in the script.
+     While SCRIPT_URL is empty, the page uses FormSubmit instead. */
+  var SCRIPT_URL = "";
+  var SCRIPT_SECRET = "";
+  /* ---------------------------------------------------------------------- */
   var STORE = "Little Country Store";
   var LS_KEY = "lcs-daily-sheet-v1";
 
@@ -346,6 +358,53 @@ button.danger { border-color: #b3261e; color: #b3261e; }
     }
   }
 
+  function cshCount() {
+    var n = parseInt(state.cshRows, 10);
+    if (!(n >= 4)) n = 4;
+    return Math.min(n, 40);
+  }
+
+  function buildCash() {
+    var box = $("cashPaid");
+    Array.prototype.slice.call(box.querySelectorAll(".row, .add")).forEach(function (el) { el.remove(); });
+    var n = cshCount();
+    for (var i = 1; i <= n; i++) {
+      var row = document.createElement("div");
+      row.className = "row cash";
+      var d = document.createElement("input");
+      d.type = "text"; d.className = "desc"; d.autocomplete = "off";
+      d.placeholder = i === 1 ? "Who / what (e.g. milk vendor)" : "Who / what";
+      d.id = "cshd" + i; d.dataset.key = "cshd" + i;
+      d.setAttribute("aria-label", "Cash paid " + i + " description");
+      var wrap = document.createElement("div");
+      wrap.className = "amt";
+      var a = document.createElement("input");
+      a.type = "text"; a.inputMode = "decimal"; a.autocomplete = "off"; a.placeholder = "0.00";
+      a.id = "csh" + i; a.dataset.key = "csh" + i;
+      a.setAttribute("aria-label", "Cash paid " + i + " amount");
+      wrap.appendChild(a);
+      row.appendChild(d);
+      row.appendChild(wrap);
+      box.appendChild(row);
+    }
+    var add = document.createElement("button");
+    add.type = "button"; add.className = "quiet add"; add.textContent = "Add another line";
+    add.addEventListener("click", function () {
+      state.cshRows = Math.min(cshCount() + 1, 40);
+      save();
+      buildCash();
+      applyStateToInputs();
+      var f = $("cshd" + state.cshRows); if (f) f.focus();
+    });
+    box.appendChild(add);
+  }
+
+  function cashLabel(i) {
+    var k = "cshd" + (i + 1);
+    var d = String(state[k] || "").trim();
+    return d || ("Cash paid #" + (i + 1));
+  }
+
   function sumKeys(keys) {
     var c = 0;
     keys.forEach(function (k) { c += Math.round(parseAmt(state[k]) * 100); });
@@ -353,7 +412,8 @@ button.danger { border-color: #b3261e; color: #b3261e; }
   }
   function listKeys(prefix) {
     var a = [];
-    for (var i = 1; i <= LIST_N; i++) a.push(prefix + i);
+    var n = prefix === "csh" ? cshCount() : LIST_N;
+    for (var i = 1; i <= n; i++) a.push(prefix + i);
     return a;
   }
 
@@ -376,6 +436,11 @@ button.danger { border-color: #b3261e; color: #b3261e; }
   }
 
   function recalc() {
+    // Cash pay out on the left is always the Cash paid total from the right
+    var cshTotal = sumKeys(listKeys("csh"));
+    state.cashPayOut = cshTotal ? cshTotal.toFixed(2) : "";
+    var cpo = $("f_cashPayOut");
+    if (cpo && cpo.value !== state.cashPayOut) cpo.value = state.cashPayOut;
     var leftTotal = sumKeys(LEFT.map(function (d) { return d[0]; }));
     var rightTotal = sumKeys(RIGHT.map(function (d) { return d[0]; }));
     var chk = sumKeys(listKeys("chk"));
@@ -395,6 +460,8 @@ button.danger { border-color: #b3261e; color: #b3261e; }
       if (isSum(v)) { el.textContent = "= " + fmt(parseAmt(v)); el.classList.add("on"); }
       else { el.textContent = ""; el.classList.remove("on"); }
     });
+    var autoEl = $("calc_cashPayOut");
+    if (autoEl) { autoEl.textContent = "Filled in from Cash paid"; autoEl.classList.add("on"); }
     return { left: leftTotal, right: rightTotal, chk: chk, csh: csh };
   }
 
@@ -453,7 +520,7 @@ button.danger { border-color: #b3261e; color: #b3261e; }
     L.push("CASH PAID");
     any = false;
     listKeys("csh").forEach(function (k, i) {
-      if (parseAmt(state[k]) !== 0) { L.push("  #" + (i + 1) + ": " + fmt(parseAmt(state[k]))); any = true; }
+      if (parseAmt(state[k]) !== 0) { L.push("  " + cashLabel(i) + ": " + fmt(parseAmt(state[k]))); any = true; }
     });
     if (!any) L.push("  -");
     L.push("  Total: " + fmt(t.csh));
@@ -501,7 +568,11 @@ button.danger { border-color: #b3261e; color: #b3261e; }
     });
     f["LEFT TOTAL"] = fmt(t.left);
     listKeys("csh").forEach(function (k, i) {
-      if (parseAmt(state[k]) !== 0) f["Cash paid #" + (i + 1)] = fmt(parseAmt(state[k]));
+      if (parseAmt(state[k]) !== 0) {
+        var key = "Cash paid - " + cashLabel(i).replace(/^Cash paid #/, "#");
+        while (f.hasOwnProperty(key)) key += " ";
+        f[key] = fmt(parseAmt(state[k]));
+      }
     });
     f["Cash paid total"] = fmt(t.csh);
     RIGHT.forEach(function (d) {
@@ -513,6 +584,32 @@ button.danger { border-color: #b3261e; color: #b3261e; }
     if (state.notes) f["Notes"] = state.notes;
     if (state.preparedBy) f["Prepared by"] = state.preparedBy;
     return f;
+  }
+
+  function buildHtml(fields) {
+    function esc(x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>"); }
+    var rows = "";
+    Object.keys(fields).forEach(function (k) {
+      var v = fields[k];
+      if (v === "-" || v === "") return;
+      var label = k.trim();
+      var strong = /total$/i.test(label);
+      var st = "padding:7px 12px;border-bottom:1px solid #e3e3e3;" + (strong ? "font-weight:700;background:#eef0fb;" : "");
+      rows += '<tr><td style="' + st + '">' + esc(label) + '</td><td style="' + st + 'text-align:right;white-space:nowrap;">' + esc(v) + "</td></tr>";
+    });
+    return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;max-width:520px;">' +
+      '<h2 style="margin:0 0 10px;font-size:18px;">' + STORE + " - Daily Sheet</h2>" +
+      '<table style="border-collapse:collapse;width:100%;">' + rows + "</table></div>";
+  }
+
+  function sendViaScript(to, subject, fields) {
+    return fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ secret: SCRIPT_SECRET, to: to, subject: subject, html: buildHtml(fields), text: buildSummary() })
+    }).then(function (res) { return res.json(); }).then(function (data) {
+      if (!data || data.ok !== true) throw new Error((data && data.error) || "Script error");
+      return { clean: true };
+    });
   }
 
   var sending = false;
@@ -541,7 +638,11 @@ button.danger { border-color: #b3261e; color: #b3261e; }
     $s.textContent = "";
     var old = $("fallbackBtn"); if (old) old.remove();
 
-    fetch("https://formsubmit.co/ajax/" + encodeURIComponent(to), {
+    var request;
+    if (SCRIPT_URL) {
+      request = sendViaScript(to, subject, buildFields());
+    } else {
+      request = fetch("https://formsubmit.co/ajax/" + encodeURIComponent(to), {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify(payload)
@@ -552,7 +653,9 @@ button.danger { border-color: #b3261e; color: #b3261e; }
         }
         return data;
       });
-    }).then(function (data) {
+    });
+    }
+    request.then(function (data) {
       var msg = String(data.message || "");
       if (/activat|confirm/i.test(msg)) {
         $s.style.color = "#8a5a00";
@@ -613,6 +716,7 @@ button.danger { border-color: #b3261e; color: #b3261e; }
     btn.textContent = "Start new day";
     var prepared = state.preparedBy || "";
     state = { date: todayStr(), preparedBy: prepared, to: state.to };
+    buildCash();
     applyStateToInputs();
     recalc();
     save();
@@ -622,12 +726,14 @@ button.danger { border-color: #b3261e; color: #b3261e; }
   function init() {
     buildList($("checkPaid"), "chk");
     buildRows($("leftRows"), LEFT);
-    buildList($("cashPaid"), "csh");
     buildRows($("rightRows"), RIGHT);
     load();
+    buildCash();
     if (!state.date) state.date = todayStr();
     if (state.to === undefined) state.to = DEFAULT_TO;
     applyStateToInputs();
+    var cpoEl = $("f_cashPayOut");
+    if (cpoEl) { cpoEl.readOnly = true; cpoEl.tabIndex = -1; cpoEl.setAttribute("aria-label", "Cash pay out (filled in from Cash paid)"); }
     // hint for credit card
     var cc = $("f_creditCard");
     if (cc) cc.placeholder = "0.00 or 887.87+964.06";
