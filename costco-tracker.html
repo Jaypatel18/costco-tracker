@@ -325,7 +325,7 @@ select.fi { -webkit-appearance:menulist; appearance:menulist; padding-right:6px;
 // ── Storage ───────────────────────────────────────────────────────────────────
 let items    = parse(localStorage.getItem('cpt-items'),    []);
 let claims   = parse(localStorage.getItem('cpt-claims'),   []);
-let settings = parse(localStorage.getItem('cpt-settings'), {warningDays:5, minRefund:5, darkMode:false});
+let settings = parse(localStorage.getItem('cpt-settings'), {warningDays:5, minRefund:5, darkMode:false, geminiKey:'AQ.Ab8RN6Isl-6wTSo09BxSBhIpubmGW5iooIshPGbYi4uC3t0BnA'});
 
 function parse(str, def) { try { return str ? JSON.parse(str) : def; } catch { return def; } }
 function saveItems()    { localStorage.setItem('cpt-items',    JSON.stringify(items)); }
@@ -610,6 +610,15 @@ function renderSettings() {
       '<div class="srow"><div><div class="slb">Dark mode</div><div class="ssb">Easy on the eyes</div></div>' +
         '<div class="tog'+(settings.darkMode?' on':'')+'" id="tog-dark"><div class="tok"></div></div></div>' +
     '</div>' +
+    '<div class="sec">Receipt Auto-Fill</div>' +
+    '<div class="card" style="margin-bottom:14px">' +
+      '<div style="font-size:13px;color:var(--sub);margin-bottom:10px">Paste a free Google Gemini API key to auto-fill item details from a receipt photo. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">Get a free key →</a></div>' +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+        '<input class="fi" id="s-gemini" type="password" placeholder="AIza..." value="'+escH(settings.geminiKey||'')+'" style="flex:1;margin:0"/>' +
+        '<button class="bb" id="s-gemini-save" style="white-space:nowrap">Save</button>' +
+      '</div>' +
+      (settings.geminiKey ? '<div style="font-size:11px;color:#2e7d32;margin-top:6px">✓ Key saved — receipt scanning enabled</div>' : '<div style="font-size:11px;color:var(--sub);margin-top:6px">No key — photos attach as reference only</div>') +
+    '</div>' +
     '<div class="aboutbox">' +
       '<div class="al">About Price Match Policy</div>' +
       '<div class="at">Costco\'s price protection policy allows members to request a refund for the price difference within <strong>30 days</strong> of purchase if the price drops. Visit the membership counter with your receipt.</div>' +
@@ -653,6 +662,14 @@ function attachTabHandlers() {
   if (td) td.addEventListener('click', function() {
     settings.darkMode = !settings.darkMode; saveSettings(); applyDark(); render();
   });
+  const sg = document.getElementById('s-gemini-save');
+  if (sg) sg.addEventListener('click', function() {
+    const key = (document.getElementById('s-gemini').value || '').trim();
+    settings.geminiKey = key;
+    saveSettings();
+    toast(key ? 'API key saved ✓ — scanning enabled!' : 'Key cleared');
+    render();
+  });
 }
 
 // ── ADD MODAL ─────────────────────────────────────────────────────────────────
@@ -673,11 +690,11 @@ function openAdd() {
 
       // Receipt scan section
       '<div class="ff">' +
-        '<label class="fl">Scan Receipt with AI (optional)</label>' +
+        '<label class="fl">'+(settings.geminiKey ? 'Scan Receipt — Auto-fill' : 'Receipt Photo (optional)')+'</label>' +
         '<div class="sa" id="scan-area">' +
-          '<div class="sai">📷</div>' +
-          '<div class="sat">Tap to scan a receipt</div>' +
-          '<div class="sas">Claude will read and fill in the details</div>' +
+          '<div class="sai">'+(settings.geminiKey ? '📷' : '🧾')+'</div>' +
+          '<div class="sat">'+(settings.geminiKey ? 'Tap to scan receipt' : 'Tap to attach receipt photo')+'</div>' +
+          '<div class="sas">'+(settings.geminiKey ? 'Claude will read and fill in the details' : 'Photo saves as reference — add Gemini key in Settings to auto-fill')+'</div>' +
         '</div>' +
         '<input type="file" id="scan-file" accept="image/*" style="display:none"/>' +
         '<div id="scan-result" style="display:none"></div>' +
@@ -724,10 +741,13 @@ function submitAdd() {
   if (!price||isNaN(+price)) { err.textContent='Valid purchase price required'; err.style.display=''; return; }
   if (!date)              { err.textContent='Purchase date is required';   err.style.display=''; return; }
 
+  const receiptImg = window._pendingReceipt || null;
+  window._pendingReceipt = null;
   items.unshift({
     id: uid(), name, itemNumber:num, category:cat,
     purchasePrice:+price, currentPrice:curr?+curr:null,
-    purchaseDate:date, claimed:false, createdAt:new Date().toISOString()
+    purchaseDate:date, claimed:false, createdAt:new Date().toISOString(),
+    receiptImg
   });
   saveItems();
   closeAll();
@@ -735,64 +755,87 @@ function submitAdd() {
   render();
 }
 
-// ── RECEIPT SCAN ──────────────────────────────────────────────────────────────
+// ── RECEIPT SCAN / ATTACH ─────────────────────────────────────────────────────
 async function handleScan(e) {
   const file = e.target.files[0];
   if (!file) return;
 
   const resultEl = document.getElementById('scan-result');
   resultEl.style.display = '';
-  resultEl.innerHTML = '<div style="text-align:center;padding:16px"><div class="spin"></div><div style="font-size:12px;color:var(--sub);margin-top:8px">Reading receipt...</div></div>';
+  resultEl.innerHTML = '<div style="text-align:center;padding:12px"><div class="spin"></div><div style="font-size:12px;color:var(--sub);margin-top:8px">'+(settings.geminiKey?'Reading receipt…':'Attaching photo…')+'</div></div>';
 
   try {
     const b64 = await fileToB64(file);
+    window._pendingReceipt = b64;
     const imgData = b64.split(',')[1];
     const mediaType = file.type || 'image/jpeg';
 
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image', source:{type:'base64', media_type:mediaType, data:imgData}},
-            {type:'text', text:'This is a Costco receipt. Extract: item name, item number (if visible), price paid, and purchase date. Respond ONLY with valid JSON like: {"name":"","itemNumber":"","price":"","date":"YYYY-MM-DD"}. If multiple items, return the first/most expensive one. If a field is not visible, use empty string.'}
-          ]
-        }]
-      })
-    });
+    if (settings.geminiKey) {
+      // ── Gemini vision scan ──
+      const resp = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + encodeURIComponent(settings.geminiKey),
+        {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            contents:[{parts:[
+              {inline_data:{mime_type:mediaType, data:imgData}},
+              {text:'This is a Costco receipt. Extract the item details. Return ONLY valid JSON, no markdown: {"name":"","itemNumber":"","price":"","date":"YYYY-MM-DD"}. For name use the item description. For price use the amount paid. For date use the purchase date. If multiple items pick the most expensive. Use empty string for any field not visible.'}
+            ]}],
+            generationConfig:{maxOutputTokens:300, temperature:0}
+          })
+        }
+      );
 
-    const data = await resp.json();
-    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const clean = text.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
+      if (!resp.ok) {
+        const err = await resp.json().catch(()=>({}));
+        throw new Error((err.error && err.error.message) || 'API error '+resp.status);
+      }
 
-    // Fill in the form
-    if (parsed.name)       document.getElementById('a-name').value  = parsed.name;
-    if (parsed.itemNumber) document.getElementById('a-num').value   = parsed.itemNumber;
-    if (parsed.price)      document.getElementById('a-price').value = parsed.price.replace(/[^0-9.]/g,'');
-    if (parsed.date)       document.getElementById('a-date').value  = parsed.date;
+      const data = await resp.json();
+      const text = ((data.candidates||[])[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
+      const clean = text.replace(/```json|```/g,'').trim();
+      let parsed = {};
+      try { parsed = JSON.parse(clean); } catch(_) { throw new Error('Could not parse response'); }
 
-    // Try to match category
-    if (parsed.name) {
-      const lower = parsed.name.toLowerCase();
-      if (lower.match(/tv|laptop|phone|tablet|camera|computer|audio|speaker/)) document.getElementById('a-cat').value='Electronics';
-      else if (lower.match(/food|snack|drink|beverage|organic|coffee|meat|cheese/)) document.getElementById('a-cat').value='Food & Grocery';
+      // Auto-fill form fields
+      if (parsed.name)       document.getElementById('a-name').value  = parsed.name;
+      if (parsed.itemNumber) document.getElementById('a-num').value   = parsed.itemNumber;
+      if (parsed.price)      document.getElementById('a-price').value = String(parsed.price).replace(/[^0-9.]/g,'');
+      if (parsed.date)       document.getElementById('a-date').value  = parsed.date;
+
+      // Auto-select category from name
+      if (parsed.name) {
+        const lower = parsed.name.toLowerCase();
+        if (lower.match(/tv|monitor|laptop|phone|tablet|camera|computer|audio|speaker|headphone/)) document.getElementById('a-cat').value='Electronics';
+        else if (lower.match(/food|snack|drink|beverage|organic|coffee|meat|cheese|fruit|veggie|bread|chicken|beef/)) document.getElementById('a-cat').value='Food & Grocery';
+        else if (lower.match(/shirt|pant|jacket|shoe|sock|cloth|apparel|wear/)) document.getElementById('a-cat').value='Clothing';
+        else if (lower.match(/vitamin|supplement|medicine|health|beauty|shampoo|lotion/)) document.getElementById('a-cat').value='Health & Beauty';
+        else if (lower.match(/washer|dryer|fridge|dishwasher|microwave|oven|appliance/)) document.getElementById('a-cat').value='Appliances';
+      }
+
+      resultEl.innerHTML =
+        '<div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;font-size:13px;color:#2e7d32;margin-bottom:8px">' +
+          '✓ Receipt scanned — fields filled in!' +
+        '</div>' +
+        '<img src="'+b64+'" style="width:100%;border-radius:10px;max-height:160px;object-fit:cover"/>';
+
+    } else {
+      // ── No key — just attach photo ──
+      resultEl.innerHTML =
+        '<div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;font-size:13px;color:#2e7d32;margin-bottom:8px">' +
+          '✓ Photo attached — fill in details below' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--sub);margin-bottom:6px">Add a Gemini API key in Settings to auto-fill.</div>' +
+        '<img src="'+b64+'" style="width:100%;border-radius:10px;max-height:160px;object-fit:cover"/>';
     }
 
-    resultEl.innerHTML =
-      '<div class="sres">' +
-        '<div class="srh">✓ Receipt scanned — fields pre-filled</div>' +
-        (parsed.name?'<div class="srr">📦 '+escH(parsed.name)+'</div>':'') +
-        (parsed.price?'<div class="srr">💵 $'+escH(parsed.price)+'</div>':'') +
-        (parsed.date?'<div class="srr">📅 '+escH(parsed.date)+'</div>':'') +
-        '<div style="font-size:11px;color:var(--sub);margin-top:5px">Review and edit below before saving</div>' +
-      '</div>';
   } catch(err) {
-    resultEl.innerHTML = '<div style="background:#fdecea;border-radius:10px;padding:10px;font-size:12px;color:#c62828">Could not read receipt — please fill in manually.</div>';
+    resultEl.innerHTML =
+      '<div style="background:#fdecea;border-radius:10px;padding:10px;font-size:12px;color:#c62828">' +
+        '⚠️ ' + escH(err.message || 'Could not read receipt') + ' — fill in manually.' +
+      '</div>' +
+      (window._pendingReceipt ? '<img src="'+window._pendingReceipt+'" style="width:100%;border-radius:10px;margin-top:8px;max-height:160px;object-fit:cover"/>' : '');
     console.error(err);
   }
   e.target.value = '';
@@ -973,6 +1016,7 @@ function closeAll() {
     const el = document.getElementById(id);
     if (el) el.remove();
   });
+  window._pendingReceipt = null;
 }
 
 // ── Shared ────────────────────────────────────────────────────────────────────
